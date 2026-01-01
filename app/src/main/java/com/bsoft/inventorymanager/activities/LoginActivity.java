@@ -101,9 +101,19 @@ public class LoginActivity extends AppCompatActivity {
                         if (document.exists()) {
                             Employee employee = document.toObject(Employee.class);
                             CurrentUser.getInstance().setEmployee(employee);
-                            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                            startActivity(intent);
-                            finish();
+
+                            // Update FCM Token
+                            com.google.firebase.messaging.FirebaseMessaging.getInstance().getToken()
+                                    .addOnCompleteListener(tokenTask -> {
+                                        if (tokenTask.isSuccessful()) {
+                                            String token = tokenTask.getResult();
+                                            new com.bsoft.inventorymanager.roles.RolesRepository()
+                                                    .updateFCMToken(firebaseUser.getUid(), token);
+                                        }
+                                        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                                        startActivity(intent);
+                                        finish();
+                                    });
                         } else {
                             Toast.makeText(LoginActivity.this, "Employee data not found.", Toast.LENGTH_SHORT).show();
                             mAuth.signOut();

@@ -27,7 +27,8 @@ public class RolesRepository {
         purchasesCollection = db.collection("purchases");
     }
 
-    public ListenerRegistration loadEmployees(Executor executor, com.google.firebase.firestore.EventListener<QuerySnapshot> listener) {
+    public ListenerRegistration loadEmployees(Executor executor,
+            com.google.firebase.firestore.EventListener<QuerySnapshot> listener) {
         return employeesCollection.whereEqualTo("isActive", true).addSnapshotListener(executor, listener);
     }
 
@@ -36,11 +37,13 @@ public class RolesRepository {
     }
 
     public Query getSalesByEmployee(String employeeId) {
-        return salesCollection.whereEqualTo("userId", employeeId).orderBy("saleDate", Query.Direction.DESCENDING).limit(10);
+        return salesCollection.whereEqualTo("userId", employeeId).orderBy("saleDate", Query.Direction.DESCENDING)
+                .limit(10);
     }
 
     public Query getPurchasesByEmployee(String employeeId) {
-        return purchasesCollection.whereEqualTo("userId", employeeId).orderBy("purchaseDate", Query.Direction.DESCENDING).limit(10);
+        return purchasesCollection.whereEqualTo("userId", employeeId)
+                .orderBy("purchaseDate", Query.Direction.DESCENDING).limit(10);
     }
 
     public Task<AuthResult> createUser(String email, String password) {
@@ -58,5 +61,12 @@ public class RolesRepository {
     public Task<Void> deleteEmployee(Employee employee) {
         DocumentReference employeeRef = employeesCollection.document(employee.getDocumentId());
         return employeeRef.update("isActive", false);
+    }
+
+    public Task<Void> updateFCMToken(String employeeId, String token) {
+        if (employeeId == null || token == null) {
+            return null;
+        }
+        return employeesCollection.document(employeeId).update("fcmToken", token);
     }
 }

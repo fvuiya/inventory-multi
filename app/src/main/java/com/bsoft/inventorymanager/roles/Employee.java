@@ -12,6 +12,7 @@ public class Employee implements Serializable {
     private String name;
     private String email;
     private String designation;
+    private String fcmToken; // FCM Token for notifications
     private String photo; // Base64 encoded image
     private double salary;
     private String address;
@@ -61,6 +62,14 @@ public class Employee implements Serializable {
 
     public void setDesignation(String designation) {
         this.designation = designation;
+    }
+
+    public String getFcmToken() {
+        return fcmToken;
+    }
+
+    public void setFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
     }
 
     public String getPhoto() {

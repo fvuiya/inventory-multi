@@ -52,13 +52,24 @@ public class SplashActivity extends AppCompatActivity {
                     if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
                         Employee employee = task.getResult().toObject(Employee.class);
                         CurrentUser.getInstance().setEmployee(employee);
-                        startActivity(new Intent(SplashActivity.this, MainActivity.class));
+
+                        // Update FCM Token
+                        com.google.firebase.messaging.FirebaseMessaging.getInstance().getToken()
+                                .addOnCompleteListener(tokenTask -> {
+                                    if (tokenTask.isSuccessful()) {
+                                        String token = tokenTask.getResult();
+                                        new com.bsoft.inventorymanager.roles.RolesRepository()
+                                                .updateFCMToken(firebaseUser.getUid(), token);
+                                    }
+                                    startActivity(new Intent(SplashActivity.this, MainActivity.class));
+                                    finish();
+                                });
                     } else {
                         // If employee data is not found, sign out and go to login
                         FirebaseAuth.getInstance().signOut();
                         startActivity(new Intent(SplashActivity.this, LoginActivity.class));
+                        finish();
                     }
-                    finish();
                 });
     }
 }

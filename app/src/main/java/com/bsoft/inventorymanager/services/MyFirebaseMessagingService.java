@@ -27,7 +27,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                NotificationChannel channel = new NotificationChannel("default", "Default channel", NotificationManager.IMPORTANCE_DEFAULT);
+                NotificationChannel channel = new NotificationChannel("default", "Default channel",
+                        NotificationManager.IMPORTANCE_DEFAULT);
                 notificationManager.createNotificationChannel(channel);
             }
 
@@ -38,6 +39,11 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     @Override
     public void onNewToken(String token) {
         super.onNewToken(token);
-        // TODO: Send token to your server
+        // If a user is logged in, update their token in Firestore
+        if (com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser() != null) {
+            String uid = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser().getUid();
+            com.bsoft.inventorymanager.roles.RolesRepository repository = new com.bsoft.inventorymanager.roles.RolesRepository();
+            repository.updateFCMToken(uid, token);
+        }
     }
 }
