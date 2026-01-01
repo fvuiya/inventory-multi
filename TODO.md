@@ -264,9 +264,9 @@ fun com.bsoft.inventorymanager.models.Purchase.toShared(): com.bsoft.inventoryma
 - [x] **[OPTIMIZATION]** Refactor Reports to use denormalized data and Activity-scoped ViewModel.
 - [ ] Reference: Review the full project roadmap in EXECUTION_PLAN.md
 - [ ] Migrate reporting logic to server-side Cloud Functions.
-- [ ] **Notifications (Android):** Implement logic to retrieve and store FCM tokens for employees.
-- [ ] **Notifications (Cloud Functions):** Set up a new Firebase Functions project.
-- [ ] **Notifications (Cloud Functions):** Implement a function triggered by new sales to send notifications.
+- [x] **Notifications (Android):** Implement logic to retrieve and store FCM tokens for employees.
+- [x] **Notifications (Cloud Functions):** Set up a new Firebase Functions project.
+- [x] **Notifications (Cloud Functions):** Implement a function triggered by new sales to send notifications.
 
 ### In Progress
 - [x] **[CRITICAL]** Implement transactional updates for all inventory changes to ensure data integrity.
@@ -294,6 +294,12 @@ fun com.bsoft.inventorymanager.models.Purchase.toShared(): com.bsoft.inventoryma
 
 ## 3. Changelog & Decisions
 > A log of completed tasks and key micro-decisions made during development. Gemini proposes entries here after completing a task.
+
+- **2025-01-01 (Session 11 - FCM Notifications):**
+    -   **Feature:** Implemented end-to-end Notification System for new sales.
+    -   **Android:** Added `fcmToken` to Employee model and implemented automatic token sync in `SplashActivity` and `LoginActivity`.
+    -   **Cloud Functions:** Deployed `onSaleCreated` function to listen for new sales and send multicast notifications to all "Admin/Manager" users.
+    -   **Fix:** Resolved a critical `TypeError` by replacing the deprecated `sendMulticast` with `sendEachForMulticast` (required for modern `firebase-admin` SDKs).
 
 - **2025-12-23 (Session 10 - KMP Integration & UI Fix):**
     -   **Architecture (KMP):** Completed Phase 1-5 of Kotlin Multiplatform migration. Created 17 shared data models, 5 repository interfaces, and 3 Firebase implementations (`PurchaseRepositoryImpl`, `SaleRepositoryImpl`, `ProductRepositoryImpl`) in `shared/androidMain`.
@@ -622,6 +628,14 @@ This comprehensive implementation addresses all the security and validation issu
     - Selected in `SelectSupplierActivity`.
     - Used in `CreatePurchaseActivity` and `CreatePurchaseReturnActivity`.
     - **Contains:** `PurchaseItem.java` objects.
+
+### Role Definitions
+> As defined in `SecurityManager.java` and queried in Cloud Functions.
+
+- **Admin / Manager:**
+    - **Identified by:** `permissions.can_manage_employees.granted == true`
+    - **Privileges:** Full access, receives all admin notifications.
+    - **Note:** `designation` field is free-text and commonly contains "Admin" or "Manager", but it is NOT the source of truth for logic.
 
 ### Sale.java
 - **Description:** Represents a completed sales transaction.
