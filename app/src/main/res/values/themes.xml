@@ -1,0 +1,44 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.InventoryManager" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your light theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorOnPrimary">@color/colorOnPrimary</item>
+        <!-- For Primary Container, we'll use a slightly lighter shade if available, or primary itself -->
+        <!-- Let's assume for now we might want a distinct container, or use primary directly -->
+        <!-- If you want a specific lighter shade for container, we can define one e.g. @color/colorPrimaryLight -->
+        <item name="colorPrimaryContainer">@color/colorPrimary</item> <!-- Or a lighter variant -->
+        <item name="colorOnPrimaryContainer">@color/colorOnPrimary</item> <!-- Text on primary container -->
+
+        <item name="colorSecondary">@color/colorSecondary</item> <!-- Your Amber Accent -->
+        <item name="colorOnSecondary">@color/colorOnSecondary</item>
+        <item name="colorSecondaryContainer">@color/colorSecondary</item> <!-- Or a lighter variant of accent -->
+        <item name="colorOnSecondaryContainer">@color/colorOnSecondary</item> <!-- Text on secondary container -->
+
+        <!-- Status bar color can be controlled via windowSplashScreenAnimatedIcon or explicitly -->
+        <item name="android:statusBarColor" tools:targetApi="l">@color/colorPrimaryDark</item>
+
+        <!-- Other standard theme attributes if needed -->
+        <item name="android:colorBackground">@color/colorBackground</item>
+        <item name="colorSurface">@color/colorSurface</item>
+        <item name="colorError">@color/colorError</item>
+        <item name="colorOnBackground">@color/colorOnBackground</item>
+        <item name="colorOnSurface">@color/colorOnSurface</item>
+        <item name="colorOnError">@color/colorOnError</item>
+    </style>
+
+    <style name="Theme.InventoryManager" parent="Base.Theme.InventoryManager" />
+
+    <!-- Splash Screen Theme -->
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <!-- Set the splash screen background, animated icon, and animation duration. -->
+        <item name="windowSplashScreenBackground">@android:color/white</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+
+        <!-- Set the theme of the Activity that follows your splash screen. -->
+        <item name="postSplashScreenTheme">@style/Theme.InventoryManager</item>
+    </style>
+
+    <style name="Theme.InventoryManager.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+    <style name="Theme.InventoryManager.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+</resources>

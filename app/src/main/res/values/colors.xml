@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="red">#ff0000</color> <!-- Existing red, kept for any specific uses -->
+
+    <!-- App Theme Colors based on #D91E1E -->
+    <color name="colorPrimary">#D91E1E</color> <!-- Your specified red -->
+    <color name="colorPrimaryDark">#B71C1C</color> <!-- Darker red (Material Red 900) -->
+    <color name="colorPrimaryVariant">#B71C1C</color> <!-- Using the same as Dark for variant -->
+    <color name="colorPrimaryContainer">#FFCDD2</color> <!-- Lighter red for containers -->
+    <color name="onPrimaryContainer">#B71C1C</color> <!-- Dark text/icon content on primary container -->
+
+    <color name="colorAccent">#FFC107</color> <!-- Amber 500 - for interactive elements -->
+    <color name="colorSecondary">#FFC107</color> <!-- Using Accent as Secondary -->
+    <color name="colorSecondaryVariant">#FFA000</color> <!-- Amber 700 - darker accent/secondary -->
+
+    <!-- Status indicator colors -->
+    <color name="colorSuccess">#4CAF50</color> <!-- Green for success/paid status -->
+    <color name="colorWarning">#FF9800</color> <!-- Orange for warning/partial payment -->
+    <color name="colorInfo">#2196F3</color> <!-- Blue for information -->
+
+    <!-- Standard Colors for Text and Icons on Theme Colors -->
+    <color name="colorOnPrimary">#FFFFFF</color> <!-- For text/icons on colorPrimary -->
+    <color name="colorOnSecondary">#000000</color> <!-- For text/icons on colorSecondary (Amber) -->
+
+    <!-- Standard Material Component Colors -->
+    <color name="colorBackground">#FFFFFF</color> <!-- App background -->
+    <color name="colorSurface">#FFFFFF</color> <!-- For cards, sheets, etc. -->
+    <color name="colorError">#B00020</color> <!-- Standard error color for distinction -->
+
+    <color name="colorOnBackground">#000000</color> <!-- Text on background -->
+    <color name="colorOnSurface">#000000</color> <!-- Text on surface -->
+    <color name="colorOnError">#FFFFFF</color> <!-- Text on error color -->
+
+    <!-- Dark Theme Specific Colors (can be moved to values-night/colors.xml) -->
+    <color name="dark_colorBackground">#121212</color>
+    <color name="dark_colorSurface">#1E1E1E</color>
+    <color name="dark_colorOnPrimary">#FFFFFF</color> <!-- Retaining white text on primary red -->
+    <color name="dark_colorOnSecondary">#000000</color> <!-- Retaining black text on secondary amber -->
+    <color name="dark_colorOnBackground">#E0E0E0</color> <!-- Light grey text for dark background -->
+    <color name="dark_colorOnSurface">#E0E0E0</color> <!-- Light grey text for dark surface -->
+    <color name="dark_colorError">#CF6679</color> <!-- Material standard dark theme error color -->
+    <color name="dark_colorOnError">#000000</color> <!-- Text on dark theme error color -->
+
+    <!-- Item specific colors -->
+    <color name="item_background_color">#FFFFFF</color>
+    <color name="item_border_color">#D91E1E</color>
+</resources>

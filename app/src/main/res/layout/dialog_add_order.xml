@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Customer ID"
+        android:textSize="12sp"/>
+    <EditText
+        android:id="@+id/editTextOrderCustomerId"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter Customer ID (e.g., CUST001)"
+        android:inputType="textCapCharacters"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Order Date"
+        android:textSize="12sp"/>
+    <EditText
+        android:id="@+id/editTextOrderDate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="YYYY-MM-DD"
+        android:inputType="date"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Status"
+        android:textSize="12sp"/>
+    <EditText
+        android:id="@+id/editTextOrderStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="e.g., Pending, Processing, Shipped"
+        android:inputType="textCapWords"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- For simplicity, total amount and items will be managed elsewhere or calculated -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Note: Order items and total amount will be managed in the order details screen."
+        android:textSize="12sp"
+        android:textStyle="italic"
+        android:layout_marginTop="8dp"/>
+
+</LinearLayout>

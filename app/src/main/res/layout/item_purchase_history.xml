@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="4dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp"
+    app:contentPadding="16dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/tv_supplier_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            tools:text="Supplier Name"
+            android:textAppearance="?attr/textAppearanceSubtitle1"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@+id/tv_purchase_date"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tv_purchase_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="01 Jan 2024"
+            android:textAppearance="?attr/textAppearanceCaption"
+            app:layout_constraintBaseline_toBaselineOf="@+id/tv_supplier_name"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- Status or Invoice can go here. PurchaseHistoryAdapter binds: supplier, date, total, paid, due, status. 
+             I will place Status/Invoice in the middle. Adapter might need update if IDs changed significantly, 
+             but I kept 'tv_supplier_name', 'tv_purchase_date'. 
+             'tv_total_amount', 'tv_amount_paid', 'tv_amount_due', 'tv_status' are used in adapter. 
+             I must preserve these IDs or update adapter. 
+             Universal design: Middle = Secondary. Bottom Right = Total. 
+             I will map:
+             tv_status (Middle)
+             tv_total_amount (Bottom Right)
+             tv_amount_due (Hidden or Secondary?) -> Let's put Due next to Total.
+        -->
+
+        <TextView
+            android:id="@+id/tv_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            tools:text="COMPLETED"
+            android:textAppearance="?attr/textAppearanceCaption"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_supplier_name" />
+
+        <TextView
+            android:id="@+id/tv_total_amount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            tools:text="$100.00"
+            android:textAppearance="?attr/textAppearanceSubtitle1"
+            android:textColor="@color/colorPrimary"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_status" />
+
+        <!-- Keeping Paid/Due IDs but potentially hidden or smaller to match universal clean look, 
+             or positioned to show extra info. -->
+        <TextView
+            android:id="@+id/tv_amount_due"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="Due: $20"
+            android:textAppearance="?attr/textAppearanceCaption"
+            android:textColor="@android:color/holo_red_light"
+            android:layout_marginEnd="8dp"
+            app:layout_constraintBaseline_toBaselineOf="@+id/tv_total_amount"
+            app:layout_constraintEnd_toStartOf="@+id/tv_total_amount" />
+            
+        <TextView
+            android:id="@+id/tv_amount_paid"
+             android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

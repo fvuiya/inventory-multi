@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="item_background_color">#000000</color>
+    <color name="item_border_color">#D91E1E</color>
+    
+    <!-- Status indicator colors for dark theme -->
+    <color name="colorSuccess">#66BB6A</color> <!-- Lighter green for dark theme -->
+    <color name="colorWarning">#FFB74D</color> <!-- Lighter orange for dark theme -->
+    <color name="colorInfo">#42A5F5</color> <!-- Lighter blue for dark theme -->
+</resources>

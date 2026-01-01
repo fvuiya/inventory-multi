@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- File: res/layout/item_selected_product.xml -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="8dp"
+    android:clipToPadding="false"
+    android:background="@drawable/border_radius"
+    android:layout_marginBottom="8dp">
+
+    <TextView
+        android:id="@+id/textView_item_total_amount"
+        android:layout_width="100dp"
+        android:layout_height="48dp"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="6dp"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="6dp"
+        android:gravity="center_vertical|end"
+        android:text="0.00"
+        android:textSize="16sp"
+        android:background="@drawable/border_radius"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"/>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_toStartOf="@id/textView_item_total_amount"
+        android:layout_centerVertical="true"
+        android:layout_marginEnd="8dp"
+        android:orientation="horizontal"
+        android:background="@drawable/border_radius">
+
+        <ImageButton
+            android:id="@+id/button_decrement_quantity"
+            android:layout_width="40dp"
+            android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_remove"
+            android:contentDescription="Decrease quantity" />
+
+        <EditText
+            android:id="@+id/editText_quantity"
+            android:layout_width="60dp"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent"
+            android:gravity="center"
+            android:hint="Qty"
+            android:imeOptions="actionDone"
+            android:inputType="number"
+            android:selectAllOnFocus="true"
+            android:text="1"
+            android:textSize="16sp"
+            android:minWidth="48dp"
+            android:singleLine="true"/>
+
+        <ImageButton
+            android:id="@+id/button_increment_quantity"
+            android:layout_width="40dp"
+            android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_add"
+            android:contentDescription="Increase quantity" />
+
+    </LinearLayout>
+
+    <!-- Manual Purchase Price EditText -->
+    <EditText
+        android:id="@+id/editText_purchase_price"
+        android:layout_width="80dp"
+        android:layout_height="48dp"
+        android:layout_toStartOf="@id/editText_quantity"
+        android:layout_centerVertical="true"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/border_radius"
+        android:gravity="center"
+        android:hint="Price"
+        android:imeOptions="actionDone"
+        android:inputType="numberDecimal"
+        android:selectAllOnFocus="true"
+        android:textSize="14sp"
+        android:minWidth="60dp"
+        android:singleLine="true"/>
+
+    <LinearLayout
+        android:id="@+id/product_details_layout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_toStartOf="@id/editText_purchase_price"
+        android:layout_centerVertical="true"
+        android:layout_marginEnd="8dp"
+        android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/textView_product_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Product Name"
+        android:textAppearance="?attr/textAppearanceListItem"
+        android:textSize="16sp"
+        android:maxLines="1"
+        android:ellipsize="end"/>
+
+    <TextView
+        android:id="@+id/textView_product_price"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Price: BDT 0.00"
+        android:textSize="14sp"/>
+        </LinearLayout>
+
+
+    <ImageButton
+        android:id="@+id/button_remove_product"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="-5dp"
+        android:layout_marginEnd="-5dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Remove Product"
+        android:padding="4dp"
+        android:src="@drawable/ic_remove"/>
+
+    </RelativeLayout>

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "72380338962",
+    "project_id": "testblaze-81b18",
+    "storage_bucket": "testblaze-81b18.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:72380338962:android:76903a892cc8bcb8d0d9cb",
+        "android_client_info": {
+          "package_name": "com.bsoft.inventorymanager"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCowLn1toTyxvwZXuWeTpxgZjUmv8QdXRE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

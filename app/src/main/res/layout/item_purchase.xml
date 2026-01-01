@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp"
+    app:contentPadding="16dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/textViewPurchaseSupplierName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            tools:text="Supplier Name"
+            android:textAppearance="?attr/textAppearanceSubtitle1"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@+id/textViewPurchaseDateTime"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/textViewPurchaseDateTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="01 Jan 2024"
+            android:textAppearance="?attr/textAppearanceCaption"
+            app:layout_constraintBaseline_toBaselineOf="@+id/textViewPurchaseSupplierName"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <TextView
+            android:id="@+id/textViewPurchaseSupplierAddress"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="8dp"
+            tools:text="123 Supplier St"
+            android:textAppearance="?attr/textAppearanceCaption"
+            app:layout_constraintEnd_toStartOf="@+id/buttonEditPurchase"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textViewPurchaseSupplierName" />
+
+        <ImageButton
+            android:id="@+id/buttonEditPurchase"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_editl"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="4dp"
+            app:tint="@color/colorPrimaryDark"
+            android:contentDescription="Edit Purchase"
+            app:layout_constraintEnd_toStartOf="@+id/buttonDeletePurchase"
+            app:layout_constraintTop_toBottomOf="@+id/textViewPurchaseSupplierName"
+            app:layout_constraintBottom_toBottomOf="@+id/textViewPurchaseTotalBill_new" />
+
+        <ImageButton
+            android:id="@+id/buttonDeletePurchase"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_delete"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="4dp"
+            app:tint="@android:color/holo_red_dark"
+            android:contentDescription="Delete Purchase"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textViewPurchaseSupplierName"
+            app:layout_constraintBottom_toBottomOf="@+id/textViewPurchaseTotalBill_new" />
+
+        <TextView
+            android:id="@+id/textViewPurchaseTotalBill"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="parent"/>
+
+        <TextView
+            android:id="@+id/textViewPurchaseTotalBill_new"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            tools:text="$100.00"
+            android:textAppearance="?attr/textAppearanceSubtitle1"
+            android:textColor="@color/colorPrimary"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textViewPurchaseSupplierAddress" />
+
+        <TextView
+            android:id="@+id/textViewPurchaseAmountPaid"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="Paid: $70.00"
+            android:textAppearance="?attr/textAppearanceCaption"
+            android:layout_marginEnd="8dp"
+            app:layout_constraintBaseline_toBaselineOf="@+id/textViewPurchaseTotalBill_new"
+            app:layout_constraintEnd_toStartOf="@+id/textViewPurchaseTotalBill_new" />
+
+        <TextView
+            android:id="@+id/textViewPurchaseAmountDue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="Due: $30.00"
+            android:textAppearance="?attr/textAppearanceCaption"
+            android:textColor="@android:color/holo_red_light"
+            android:layout_marginEnd="8dp"
+            app:layout_constraintBaseline_toBaselineOf="@+id/textViewPurchaseTotalBill_new"
+            app:layout_constraintEnd_toStartOf="@+id/textViewPurchaseAmountPaid" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

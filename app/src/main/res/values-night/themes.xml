@@ -1,0 +1,31 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme for dark mode. -->
+    <style name="Base.Theme.InventoryManager" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your dark theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item> <!-- #D91E1E -->
+        <item name="colorOnPrimary">@color/dark_colorOnPrimary</item> <!-- #FFFFFF -->
+        <item name="colorPrimaryContainer">@color/colorPrimaryDark</item> <!-- Using primaryDark for container in dark theme for a less intense red surface -->
+        <item name="colorOnPrimaryContainer">@color/dark_colorOnPrimary</item> <!-- #FFFFFF -->
+
+        <item name="colorSecondary">@color/colorSecondary</item> <!-- #FFC107 Amber -->
+        <item name="colorOnSecondary">@color/dark_colorOnSecondary</item> <!-- #000000 -->
+        <item name="colorSecondaryContainer">@color/colorSecondaryVariant</item> <!-- Using secondaryVariant for container in dark theme for a less intense amber surface -->
+        <item name="colorOnSecondaryContainer">@color/dark_colorOnSecondary</item> <!-- #000000 -->
+
+        <!-- Status bar color -->
+        <item name="android:statusBarColor" tools:targetApi="l">@color/dark_colorBackground</item> <!-- Or @color/colorPrimaryDark if preferred -->
+
+        <!-- Standard theme attributes for dark mode -->
+        <item name="android:colorBackground">@color/dark_colorBackground</item>
+        <item name="colorSurface">@color/dark_colorSurface</item>
+        <item name="colorError">@color/dark_colorError</item>
+        <item name="colorOnBackground">@color/dark_colorOnBackground</item>
+        <item name="colorOnSurface">@color/dark_colorOnSurface</item>
+        <item name="colorOnError">@color/dark_colorOnError</item>
+    </style>
+
+    <!-- Ensure Theme.InventoryManager also inherits from the dark Base -->
+    <style name="Theme.InventoryManager" parent="Base.Theme.InventoryManager" />
+    <style name="Theme.InventoryManager.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+    <style name="Theme.InventoryManager.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+</resources>
