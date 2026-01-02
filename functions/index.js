@@ -1,5 +1,11 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
+const dayjs = require("dayjs");
+const utc = require("dayjs/plugin/utc");
+const timezone = require("dayjs/plugin/timezone");
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 admin.initializeApp();
 
@@ -200,3 +206,127 @@ exports.onDamageRecorded = functions.firestore
             { damageId: damageId }
         );
     });
+
+/**
+ * Callable Function: Get Dashboard Statistics
+ * Calculates revenue, profit, expenses, and charts server-side.
+ */
+exports.getDashboardStats = functions.https.onCall(async (data, context) => {
+    const startDate = data.startDate;
+    const endDate = data.endDate;
+    const userTimeZone = data.timeZone || "UTC";
+
+    if (!startDate || !endDate) {
+        throw new functions.https.HttpsError("invalid-argument", "Missing startDate or endDate.");
+    }
+
+    const db = admin.firestore();
+    const startTs = admin.firestore.Timestamp.fromMillis(startDate);
+    const endTs = admin.firestore.Timestamp.fromMillis(endDate);
+
+    // Run queries in parallel
+    const salesProxy = db.collection("sales")
+        .where("saleDate", ">=", startTs)
+        .where("saleDate", "<=", endTs)
+        .get();
+
+    const expensesProxy = db.collection("expenses")
+        .where("date", ">=", startTs)
+        .where("date", "<=", endTs)
+        .get();
+
+    const [salesSnap, expensesSnap] = await Promise.all([salesProxy, expensesProxy]);
+
+    let totalRevenue = 0;
+    let totalProfit = 0;
+    let totalTransactions = salesSnap.size;
+
+    const salesOverTime = {};
+    const profitOverTime = {};
+    const productQuantities = {};
+    const productNames = {};
+    const categoryRevenue = {};
+
+    // Determine granularity
+    const daysDiff = dayjs(endDate).diff(dayjs(startDate), "day");
+    const granularity = daysDiff > 30 ? "day" : "hour";
+
+    salesSnap.forEach((doc) => {
+        const sale = doc.data();
+        const amount = sale.totalAmount || 0;
+        const profit = sale.totalProfit || 0;
+        const saleDate = sale.saleDate.toDate();
+
+        totalRevenue += amount;
+        totalProfit += profit;
+
+        // 1. Charts
+        // Bucket by User TimeZone
+        const key = dayjs(saleDate).tz(userTimeZone).startOf(granularity).valueOf();
+        salesOverTime[key] = (salesOverTime[key] || 0) + amount;
+        profitOverTime[key] = (profitOverTime[key] || 0) + profit;
+
+        // 2. Top Products & Categories
+        if (sale.items && Array.isArray(sale.items)) {
+            sale.items.forEach((item) => {
+                const pid = item.productId;
+                const pname = item.productName || "Unknown";
+                const qty = item.quantity || 0;
+                const itemTotal = item.totalPrice || 0;
+                const cat = item.category || "Uncategorized";
+
+                if (pid) {
+                    productQuantities[pid] = (productQuantities[pid] || 0) + qty;
+                    productNames[pid] = pname;
+                }
+
+                categoryRevenue[cat] = (categoryRevenue[cat] || 0) + itemTotal;
+            });
+        }
+    });
+
+    let totalExpenses = 0;
+    expensesSnap.forEach((doc) => {
+        const expense = doc.data();
+        totalExpenses += (expense.amount || 0);
+    });
+
+    // Helper to format chart data
+    const formatChart = (map) => {
+        return Object.keys(map).sort().map((k) => ({
+            x: parseInt(k),
+            y: map[k],
+        }));
+    };
+
+    // Helper to format Top Products
+    const topProducts = Object.keys(productQuantities)
+        .map((pid) => ({
+            label: productNames[pid],
+            value: productQuantities[pid]
+        }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 10); // Top 10
+
+    // Helper to format Categories
+    const salesByCategory = Object.keys(categoryRevenue)
+        .map((cat) => ({
+            label: cat,
+            value: categoryRevenue[cat]
+        }))
+        .sort((a, b) => b.value - a.value);
+
+    return {
+        totalRevenue: totalRevenue,
+        totalProfit: totalProfit,
+        netProfit: totalProfit - totalExpenses,
+        totalExpenses: totalExpenses,
+        totalTransactions: totalTransactions,
+        averageOrderValue: totalTransactions > 0 ? totalRevenue / totalTransactions : 0,
+        salesOverTime: formatChart(salesOverTime),
+        profitOverTime: formatChart(profitOverTime),
+        topSellingProducts: topProducts,
+        salesByCategory: salesByCategory,
+        granularity: granularity
+    };
+});

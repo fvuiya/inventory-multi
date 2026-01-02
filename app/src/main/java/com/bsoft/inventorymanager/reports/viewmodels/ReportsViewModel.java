@@ -34,6 +34,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import com.google.firebase.functions.FirebaseFunctions;
+import java.time.ZoneId;
 import javax.inject.Inject;
 import dagger.hilt.android.lifecycle.HiltViewModel;
 
@@ -45,10 +47,12 @@ public class ReportsViewModel extends ViewModel {
     }
 
     private final FirebaseFirestore db;
+    private final FirebaseFunctions functions;
 
     @Inject
-    public ReportsViewModel(FirebaseFirestore db) {
+    public ReportsViewModel(FirebaseFirestore db, FirebaseFunctions functions) {
         this.db = db;
+        this.functions = functions;
     }
 
     // --- LiveData Objects ---
@@ -141,6 +145,7 @@ public class ReportsViewModel extends ViewModel {
         this.currentStartDate = startDate;
         this.currentEndDate = endDate;
         updateGranularity(startDate, endDate);
+        fetchDashboardStats(startDate, endDate);
     }
 
     public Date getCurrentStartDate() {
@@ -432,100 +437,179 @@ public class ReportsViewModel extends ViewModel {
     }
 
     // --- Load Methods ---
-    public void loadSalesOverTime(Date startDate, Date endDate) {
+    // --- Cloud Function Migration ---
+
+    public void fetchDashboardStats(Date startDate, Date endDate) {
+        if (startDate == null || endDate == null)
+            return;
+
+        // Set Loading States
+        totalRevenueState.postValue(UiState.LOADING);
+        totalProfitState.postValue(UiState.LOADING);
+        totalExpensesState.postValue(UiState.LOADING);
+        netProfitState.postValue(UiState.LOADING);
+        totalTransactionsState.postValue(UiState.LOADING);
+        averageOrderValueState.postValue(UiState.LOADING);
         salesOverTimeState.postValue(UiState.LOADING);
-        db.collection("sales").whereGreaterThanOrEqualTo("saleDate", new Timestamp(startDate))
-                .whereLessThanOrEqualTo("saleDate", new Timestamp(endDate)).get()
-                .addOnSuccessListener(snapshots -> processSalesData(snapshots, startDate))
-                .addOnFailureListener(e -> salesOverTimeState.postValue(UiState.NO_DATA));
+        profitOverTimeState.postValue(UiState.LOADING);
+        topSellingProductsState.postValue(UiState.LOADING);
+        salesByCategoryState.postValue(UiState.LOADING);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("startDate", startDate.getTime());
+        data.put("endDate", endDate.getTime());
+        try {
+            data.put("timeZone", ZoneId.systemDefault().getId());
+        } catch (Exception e) {
+            data.put("timeZone", "UTC");
+        }
+
+        functions.getHttpsCallable("getDashboardStats")
+                .call(data)
+                .addOnSuccessListener(result -> {
+                    try {
+                        Map<String, Object> response = (Map<String, Object>) result.getData();
+                        processDashboardStats(response);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        setAllStates(UiState.NO_DATA);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    e.printStackTrace();
+                    setAllStates(UiState.NO_DATA);
+                });
+    }
+
+    private void setAllStates(UiState state) {
+        totalRevenueState.postValue(state);
+        totalProfitState.postValue(state);
+        totalExpensesState.postValue(state);
+        netProfitState.postValue(state);
+        totalTransactionsState.postValue(state);
+        averageOrderValueState.postValue(state);
+        salesOverTimeState.postValue(state);
+        profitOverTimeState.postValue(state);
+        topSellingProductsState.postValue(state);
+        salesByCategoryState.postValue(state);
+    }
+
+    private void processDashboardStats(Map<String, Object> data) {
+        if (data == null) {
+            setAllStates(UiState.NO_DATA);
+            return;
+        }
+
+        // 1. Scalars
+        Number revenue = (Number) data.getOrDefault("totalRevenue", 0.0);
+        totalRevenueData.postValue(revenue.doubleValue());
+        totalRevenueState.postValue(UiState.HAS_DATA);
+
+        Number profit = (Number) data.getOrDefault("totalProfit", 0.0);
+        totalProfitData.postValue(profit.doubleValue());
+        totalProfitState.postValue(UiState.HAS_DATA);
+
+        Number expenses = (Number) data.getOrDefault("totalExpenses", 0.0);
+        totalExpensesData.postValue(expenses.doubleValue());
+        totalExpensesState.postValue(UiState.HAS_DATA);
+
+        Number net = (Number) data.getOrDefault("netProfit", 0.0);
+        netProfitData.postValue(net.doubleValue());
+        netProfitState.postValue(UiState.HAS_DATA);
+
+        Number tx = (Number) data.getOrDefault("totalTransactions", 0);
+        totalTransactionsData.postValue(tx.intValue());
+        totalTransactionsState.postValue(UiState.HAS_DATA);
+
+        Number aov = (Number) data.getOrDefault("averageOrderValue", 0.0);
+        averageOrderValueData.postValue(aov.doubleValue());
+        averageOrderValueState.postValue(UiState.HAS_DATA);
+
+        // 2. Charts
+        processChartData((List<Map<String, Object>>) data.get("salesOverTime"), salesOverTimeData, salesOverTimeState);
+        processChartData((List<Map<String, Object>>) data.get("profitOverTime"), profitOverTimeData,
+                profitOverTimeState);
+
+        // 3. Top Lists
+        List<Map<String, Object>> topProducts = (List<Map<String, Object>>) data.get("topSellingProducts");
+        List<BarEntry> productEntries = new ArrayList<>();
+        List<String> productLabels = new ArrayList<>();
+        if (topProducts != null) {
+            for (int i = 0; i < topProducts.size(); i++) {
+                Map<String, Object> item = topProducts.get(i);
+                String label = (String) item.get("label");
+                Number val = (Number) item.get("value");
+                // Chart expects x index (0, 1, 2...)
+                productEntries.add(new BarEntry(topProducts.size() - 1 - i, val.floatValue())); // Reverse for chart
+                productLabels.add(label);
+            }
+            Collections.reverse(productLabels); // Match UI expectation
+        }
+        topSellingProductsData.postValue(productEntries);
+        topSellingProductsLabels.postValue(productLabels);
+        topSellingProductsState.postValue(!productEntries.isEmpty() ? UiState.HAS_DATA : UiState.NO_DATA);
+
+        // 4. Categories
+        List<Map<String, Object>> categories = (List<Map<String, Object>>) data.get("salesByCategory");
+        List<PieEntry> catEntries = new ArrayList<>();
+        if (categories != null) {
+            for (Map<String, Object> item : categories) {
+                String label = (String) item.get("label");
+                Number val = (Number) item.get("value");
+                catEntries.add(new PieEntry(val.floatValue(), label));
+            }
+        }
+        salesByCategoryData.postValue(catEntries);
+        salesByCategoryState.postValue(!catEntries.isEmpty() ? UiState.HAS_DATA : UiState.NO_DATA);
+    }
+
+    private void processChartData(List<Map<String, Object>> list, MutableLiveData<List<Entry>> liveData,
+            MutableLiveData<UiState> stateData) {
+        List<Entry> entries = new ArrayList<>();
+        if (list != null) {
+            for (Map<String, Object> point : list) {
+                Number x = (Number) point.get("x");
+                Number y = (Number) point.get("y");
+                entries.add(new Entry(x.floatValue(), y.floatValue()));
+            }
+        }
+        Collections.sort(entries, (e1, e2) -> Float.compare(e1.getX(), e2.getX()));
+        liveData.postValue(entries);
+        stateData.postValue(!entries.isEmpty() ? UiState.HAS_DATA : UiState.NO_DATA);
+    }
+
+    // --- Legacy Load Methods (Deprecated - Handled by Cloud Function) ---
+
+    public void loadSalesOverTime(Date startDate, Date endDate) {
+        // Handled by fetchDashboardStats
     }
 
     public void loadProfitOverTime(Date startDate, Date endDate) {
-        profitOverTimeState.postValue(UiState.LOADING);
-        db.collection("sales").whereGreaterThanOrEqualTo("saleDate", new Timestamp(startDate))
-                .whereLessThanOrEqualTo("saleDate", new Timestamp(endDate)).get()
-                .addOnSuccessListener(salesSnapshots -> processProfitOverTime(salesSnapshots, startDate))
-                .addOnFailureListener(e -> profitOverTimeState.postValue(UiState.NO_DATA));
+        // Handled by fetchDashboardStats
     }
 
     public void loadAverageOrderValue(Date startDate, Date endDate) {
-        averageOrderValueState.postValue(UiState.LOADING);
-        db.collection("sales").whereGreaterThanOrEqualTo("saleDate", new Timestamp(startDate))
-                .whereLessThanOrEqualTo("saleDate", new Timestamp(endDate)).get()
-                .addOnSuccessListener(this::processAverageOrderValue)
-                .addOnFailureListener(e -> averageOrderValueState.postValue(UiState.NO_DATA));
+        // Handled by fetchDashboardStats
     }
 
     public void loadTotalRevenue(Date startDate, Date endDate) {
-        totalRevenueState.postValue(UiState.LOADING);
-        db.collection("sales").whereGreaterThanOrEqualTo("saleDate", new Timestamp(startDate))
-                .whereLessThanOrEqualTo("saleDate", new Timestamp(endDate)).get()
-                .addOnSuccessListener(this::processTotalRevenue)
-                .addOnFailureListener(e -> totalRevenueState.postValue(UiState.NO_DATA));
+        // Handled by fetchDashboardStats
     }
 
     public void loadTotalProfit(Date startDate, Date endDate) {
-        totalProfitState.postValue(UiState.LOADING);
-        db.collection("sales").whereGreaterThanOrEqualTo("saleDate", new Timestamp(startDate))
-                .whereLessThanOrEqualTo("saleDate", new Timestamp(endDate)).get()
-                .addOnSuccessListener(salesSnapshots -> {
-                    processTotalProfit(salesSnapshots);
-                    // After profit is processed, also load expenses to calculate net profit
-                    loadNetProfit(startDate, endDate);
-                })
-                .addOnFailureListener(e -> totalProfitState.postValue(UiState.NO_DATA));
+        // Handled by fetchDashboardStats
     }
 
     public void loadTotalExpenses(Date startDate, Date endDate) {
-        totalExpensesState.postValue(UiState.LOADING);
-        db.collection("expenses").whereGreaterThanOrEqualTo("date", new Timestamp(startDate))
-                .whereLessThanOrEqualTo("date", new Timestamp(endDate)).get()
-                .addOnSuccessListener(this::processTotalExpenses)
-                .addOnFailureListener(e -> totalExpensesState.postValue(UiState.NO_DATA));
+        // Handled by fetchDashboardStats
     }
 
     private void loadNetProfit(Date startDate, Date endDate) {
-        netProfitState.postValue(UiState.LOADING);
-        // Start by getting sales in timeframe
-        db.collection("sales").whereGreaterThanOrEqualTo("saleDate", new Timestamp(startDate))
-                .whereLessThanOrEqualTo("saleDate", new Timestamp(endDate)).get()
-                .continueWithTask(task -> {
-                    double grossProfit = 0;
-                    if (task.isSuccessful() && task.getResult() != null) {
-                        for (DocumentSnapshot doc : task.getResult()) {
-                            Sale s = doc.toObject(Sale.class);
-                            if (s != null && s.getTotalProfit() != null) {
-                                grossProfit += s.getTotalProfit();
-                            }
-                        }
-                    }
-                    final double finalGrossProfit = grossProfit;
-                    return db.collection("expenses").whereGreaterThanOrEqualTo("date", new Timestamp(startDate))
-                            .whereLessThanOrEqualTo("date", new Timestamp(endDate)).get()
-                            .addOnSuccessListener(expenseSnapshots -> {
-                                double totalExpenses = 0;
-                                for (DocumentSnapshot doc : expenseSnapshots) {
-                                    Expense e = doc.toObject(Expense.class);
-                                    if (e != null) {
-                                        totalExpenses += e.getAmount();
-                                    }
-                                }
-                                netProfitData.postValue(finalGrossProfit - totalExpenses);
-                                netProfitState.postValue(UiState.HAS_DATA);
-
-                                // Also update totalExpenses LiveData while we are at it
-                                totalExpensesData.postValue(totalExpenses);
-                                totalExpensesState.postValue(UiState.HAS_DATA);
-                            });
-                }).addOnFailureListener(e -> netProfitState.postValue(UiState.NO_DATA));
+        // Handled by fetchDashboardStats
     }
 
     public void loadTotalTransactions(Date startDate, Date endDate) {
-        totalTransactionsState.postValue(UiState.LOADING);
-        db.collection("sales").whereGreaterThanOrEqualTo("saleDate", new Timestamp(startDate))
-                .whereLessThanOrEqualTo("saleDate", new Timestamp(endDate)).get()
-                .addOnSuccessListener(this::processTotalTransactions)
-                .addOnFailureListener(e -> totalTransactionsState.postValue(UiState.NO_DATA));
+        // Handled by fetchDashboardStats
     }
 
     public void loadTotalInventoryValue() {
@@ -536,11 +620,7 @@ public class ReportsViewModel extends ViewModel {
     }
 
     public void loadTopSellingProducts(Date startDate, Date endDate) {
-        topSellingProductsState.postValue(UiState.LOADING);
-        db.collection("sales").whereGreaterThanOrEqualTo("saleDate", new Timestamp(startDate))
-                .whereLessThanOrEqualTo("saleDate", new Timestamp(endDate)).get()
-                .addOnSuccessListener(this::processTopProducts)
-                .addOnFailureListener(e -> topSellingProductsState.postValue(UiState.NO_DATA));
+        // Handled by fetchDashboardStats
     }
 
     public void loadTopPurchasedProducts(Date startDate, Date endDate) {
@@ -705,11 +785,7 @@ public class ReportsViewModel extends ViewModel {
     }
 
     public void loadSalesByCategory(Date startDate, Date endDate) {
-        salesByCategoryState.postValue(UiState.LOADING);
-        db.collection("sales").whereGreaterThanOrEqualTo("saleDate", new Timestamp(startDate))
-                .whereLessThanOrEqualTo("saleDate", new Timestamp(endDate)).get()
-                .addOnSuccessListener(this::processSalesByCategory)
-                .addOnFailureListener(e -> salesByCategoryState.postValue(UiState.NO_DATA));
+        // Handled by fetchDashboardStats
     }
 
     public void loadTotalSpendBySupplier(Date startDate, Date endDate) {

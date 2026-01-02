@@ -23,6 +23,12 @@ public class AppModule {
 
     @Provides
     @Singleton
+    public com.google.firebase.functions.FirebaseFunctions provideFirebaseFunctions() {
+        return com.google.firebase.functions.FirebaseFunctions.getInstance();
+    }
+
+    @Provides
+    @Singleton
     public ProductApiService provideProductApiService() {
         return RetrofitClient.getClient().create(ProductApiService.class);
     }
