@@ -306,10 +306,21 @@ fun com.bsoft.inventorymanager.models.Purchase.toShared(): com.bsoft.inventoryma
     -   **Infrastructure:** Added Kotlin Android plugin to `:app` module, created `ModelMappers.kt` utility for Java↔Kotlin model conversion, verified app builds and runs with shared module.
     -   **Bug Fix:** Fixed `PaymentSheet` displaying incorrect transaction type text. Added `transactionType` parameter to dynamically show "Sale Finalized!", "Purchase Finalized!", etc. based on context.
 
+- **[Feature] Advanced Notifications & Reports Migration:**
+    - **Notifications:**
+        - Implemented Cloud Functions triggers: `onPurchaseCreated`, `onSaleReturnCreated`, `onPurchaseReturnCreated`, `onDamageRecorded`.
+        - Created `sendAdminNotification` helper to centralize FCM and Firestore notification logic.
+        - Added `Notification` model, adapter, and fragment for a dedicated notification center in the app.
+        - Integrated FCM tokens for admin push notifications.
+    - **Reports Migration:**
+        - Deployed `getDashboardStats` Cloud Function (HTTP Callable) to handle heavy reporting aggregations server-side.
+        - Integrated `dayjs` in Cloud Functions for robust User-Timezone handling.
+        - Refactored `ReportsViewModel` to remove legacy client-side aggregation logic and consume the Cloud Function response.
+        - Updated `SalesFragment`, `FinancialFragment`, and `ProfitFragment` flow to trigger server-side fetch.
 - **2025-12-22 (Session 9 - UI Consistency & Product Metadata Optimization):**
     -   **Performance:** Optimized `fetchUniqueBrandsAndCategories` in `ProductRepositoryImpl` to use a dedicated `metadata/products` document. This eliminates the need to scan the entire product collection to populate dropdowns, significantly reducing Firestore reads and latency.
     -   **Refactor:** Refactored `SalesActivity` and `PurchaseActivity` to use `MainViewModel` and `SwipeRefreshLayout`. This removes direct Firestore listeners, ensures consistent pagination logic across the dashboard, and enables manual "pull-to-refresh" functionality.
-    -   **Architecture:** Centralized Product operations (Save, Delete) into `ProductRepository` and exposed them via `MainViewModel`. `ProductActivity` now delegates all data operations to the ViewModel, removing direct Firestore dependencies for write operations.
+    -   **Architecture:** Centralized Product operations into `ProductRepository` and exposed them via `MainViewModel`. `ProductActivity` now delegates all data operations to the ViewModel, removing direct Firestore dependencies for write operations.
     -   **Robostness:** Implemented atomic updates for Product Metadata (brands/categories) within the `saveProduct` flow, ensuring the filter dropdowns remain up-to-date without expensive re-scans.
 - **2025-12-21 (Session 8 - Phase 1 Remediation & Pagination):**
     -   **Performance:** Implemented **paginated loading for Expenses** in `MainRepository`, resolving a potential memory bottleneck as the expense history grows.
