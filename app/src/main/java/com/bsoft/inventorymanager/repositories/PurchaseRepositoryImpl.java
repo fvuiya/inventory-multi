@@ -135,8 +135,56 @@ public class PurchaseRepositoryImpl implements PurchaseRepository {
                 .addOnSuccessListener(querySnapshot -> {
                     List<Supplier> suppliers = new java.util.ArrayList<>();
                     for (com.google.firebase.firestore.QueryDocumentSnapshot doc : querySnapshot) {
-                        Supplier s = doc.toObject(Supplier.class);
+                        // Manual mapping to handle Timestamp -> Long conversion
+                        Supplier s = new Supplier();
                         s.setDocumentId(doc.getId());
+                        s.setName(doc.getString("name"));
+                        s.setContactNumber(doc.getString("contactNumber"));
+                        s.setAddress(doc.getString("address"));
+                        s.setAge(doc.getLong("age") != null ? doc.getLong("age").intValue() : 0);
+                        s.setPhoto(doc.getString("photo"));
+                        s.setActive(Boolean.TRUE.equals(doc.getBoolean("isActive")));
+                        s.setRating(doc.getDouble("rating") != null ? doc.getDouble("rating") : 0.0);
+                        s.setPaymentTerms(doc.getString("paymentTerms"));
+                        s.setLeadTime(doc.getLong("leadTime") != null ? doc.getLong("leadTime").intValue() : 0);
+                        s.setPerformanceScore(
+                                doc.getDouble("performanceScore") != null ? doc.getDouble("performanceScore") : 0.0);
+                        s.setPreferredSupplier(Boolean.TRUE.equals(doc.getBoolean("preferredSupplier")));
+                        s.setOutstandingPayment(
+                                doc.getDouble("outstandingPayment") != null ? doc.getDouble("outstandingPayment")
+                                        : 0.0);
+                        s.setContractDetails(doc.getString("contractDetails"));
+                        s.setProductsSupplied(doc.getString("productsSupplied"));
+
+                        // Handle Timestamps safely (can be Timestamp or Long)
+                        Object lastDeliveryObj = doc.get("lastDeliveryDate");
+                        long lastDeliveryTime = 0;
+                        if (lastDeliveryObj instanceof com.google.firebase.Timestamp) {
+                            lastDeliveryTime = ((com.google.firebase.Timestamp) lastDeliveryObj).toDate().getTime();
+                        } else if (lastDeliveryObj instanceof Number) {
+                            lastDeliveryTime = ((Number) lastDeliveryObj).longValue();
+                        }
+                        s.setLastDeliveryDate(lastDeliveryTime);
+
+                        s.setBankAccount(doc.getString("bankAccount"));
+                        s.setTaxId(doc.getString("taxId"));
+
+                        Object creationObj = doc.get("creationDate");
+                        long creationTime = 0;
+                        if (creationObj instanceof com.google.firebase.Timestamp) {
+                            creationTime = ((com.google.firebase.Timestamp) creationObj).toDate().getTime();
+                        } else if (creationObj instanceof Number) {
+                            creationTime = ((Number) creationObj).longValue();
+                        }
+                        s.setCreationDate(creationTime);
+
+                        s.setTotalSupplyAmount(
+                                doc.getDouble("totalSupplyAmount") != null ? doc.getDouble("totalSupplyAmount") : 0.0);
+                        s.setSupplyFrequency(
+                                doc.getLong("supplyFrequency") != null ? doc.getLong("supplyFrequency").intValue() : 0);
+                        s.setSupplierType(doc.getString("supplierType"));
+                        s.setSupplierTier(doc.getString("supplierTier"));
+
                         suppliers.add(s);
                     }
                     callback.onSuccess(suppliers);

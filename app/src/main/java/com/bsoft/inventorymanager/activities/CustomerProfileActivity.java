@@ -12,10 +12,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bsoft.inventorymanager.R;
 import com.bsoft.inventorymanager.adapters.ActivityEventAdapter;
-import com.bsoft.inventorymanager.models.Customer;
+import com.bsoft.inventorymanager.model.Customer;
 import com.bsoft.inventorymanager.viewmodels.ActivityFeedViewModel;
 import com.bsoft.inventorymanager.viewmodels.CustomerProfileViewModel;
+import dagger.hilt.android.AndroidEntryPoint;
 
+@AndroidEntryPoint
 public class CustomerProfileActivity extends AppCompatActivity {
 
     private CustomerProfileViewModel profileViewModel;
@@ -47,7 +49,8 @@ public class CustomerProfileActivity extends AppCompatActivity {
     }
 
     private void updateUi(Customer customer) {
-        if (customer == null) return;
+        if (customer == null)
+            return;
 
         ImageView photo = findViewById(R.id.iv_customer_photo);
         TextView name = findViewById(R.id.tv_customer_name);
@@ -61,9 +64,13 @@ public class CustomerProfileActivity extends AppCompatActivity {
         address.setText("Address: " + customer.getAddress());
 
         if (customer.getPhoto() != null && !customer.getPhoto().isEmpty()) {
-            byte[] decodedString = Base64.decode(customer.getPhoto(), Base64.DEFAULT);
-            Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
-            photo.setImageBitmap(decodedByte);
+            try {
+                byte[] decodedString = Base64.decode(customer.getPhoto(), Base64.DEFAULT);
+                Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                photo.setImageBitmap(decodedByte);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 }

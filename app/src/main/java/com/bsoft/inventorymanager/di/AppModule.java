@@ -80,4 +80,18 @@ public class AppModule {
             FirebaseFirestore db) {
         return new com.bsoft.inventorymanager.repository.SupplierRepositoryImpl(db);
     }
+
+    @Provides
+    @Singleton
+    public com.bsoft.inventorymanager.repository.CustomerRepository provideCustomerRepository(
+            com.bsoft.inventorymanager.repository.CustomerRepositoryImpl impl) {
+        return impl;
+    }
+
+    @Provides
+    @Singleton
+    public com.bsoft.inventorymanager.repository.CustomerRepositoryImpl provideCustomerRepositoryImpl(
+            FirebaseFirestore db) {
+        return new com.bsoft.inventorymanager.repository.CustomerRepositoryImpl(db);
+    }
 }

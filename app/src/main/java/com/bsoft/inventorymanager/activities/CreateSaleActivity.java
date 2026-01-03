@@ -21,12 +21,13 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bsoft.inventorymanager.R;
 import com.bsoft.inventorymanager.adapters.SelectedProductsAdapter;
-import com.bsoft.inventorymanager.models.Customer;
+import com.bsoft.inventorymanager.model.Customer;
 import com.bsoft.inventorymanager.models.PaymentDraft;
 import com.bsoft.inventorymanager.models.Product;
 import com.bsoft.inventorymanager.models.ProductSelection;
@@ -179,10 +180,11 @@ public class CreateSaleActivity extends BaseActivity
     private final ActivityResultLauncher<Intent> selectCustomerLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(), result -> {
                 if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
-                    Customer customer = (Customer) result.getData()
-                            .getSerializableExtra(SelectCustomerActivity.EXTRA_SELECTED_CUSTOMER);
-                    if (customer != null) {
-                        viewModel.setSelectedCustomer(customer);
+                    // Refactored to get ID and load, to match KMP migration and intent payload
+                    // change
+                    String customerId = result.getData().getStringExtra("SELECTED_CUSTOMER_ID");
+                    if (customerId != null && !customerId.isEmpty()) {
+                        viewModel.loadCustomerById(customerId);
                     }
                 }
             });
@@ -199,7 +201,7 @@ public class CreateSaleActivity extends BaseActivity
         // ViewModelProvider(this).get(...)
         // But first let's add @AndroidEntryPoint annotation to class.
 
-        viewModel = new androidx.lifecycle.ViewModelProvider(this).get(CreateSaleViewModel.class);
+        viewModel = new ViewModelProvider(this).get(CreateSaleViewModel.class);
 
         customerSpinner = findViewById(R.id.spinner_customer);
         saveSaleButton = findViewById(R.id.button_finalize_sale);
@@ -219,7 +221,7 @@ public class CreateSaleActivity extends BaseActivity
 
         viewModel.getSelectedCustomer().observe(this, this::updateCustomerSelectionUI);
 
-        viewModel.getIsLoading().observe(this, isLoading -> {
+        viewModel.isLoading().observe(this, isLoading -> {
             if (isLoading)
                 showLoadingIndicator("Processing...");
             else
@@ -251,13 +253,34 @@ public class CreateSaleActivity extends BaseActivity
 
         imageButtonCalendar.setOnClickListener(v -> showDatePickerDialog());
         imageButtonAddNewCustomer.setOnClickListener(v -> {
-            AddEditCustomerSheet sheet = AddEditCustomerSheet.newInstance(null);
+            // Updated to reference activity-relative sheet
+            com.bsoft.inventorymanager.activities.AddEditCustomerSheet sheet = com.bsoft.inventorymanager.activities.AddEditCustomerSheet
+                    .newInstance(null);
             Bundle args = sheet.getArguments();
             if (args == null)
                 args = new Bundle();
             args.putBoolean("RETURN_DIRECTLY", true);
             sheet.setArguments(args);
             sheet.show(getSupportFragmentManager(), "AddEditCustomerSheet");
+        });
+
+        // Listen for new customer results (e.g. from AddEditCustomerSheet returning
+        // result)
+        getSupportFragmentManager().setFragmentResultListener("customer_update", this, (requestKey, bundle) -> {
+            // If the sheet doesn't return ID directly, we might need a different mechanism
+            // or it just updates DB.
+            // If it updates DB, we don't know the ID easily unless passed.
+            // AddEditCustomerSheet logic was updated to startActivityForResult logic OR
+            // fragment result.
+            // If it uses startActivityForResult (legacy path via RETURN_ON_ADD intent), we
+            // need to handle that.
+            // But since it's a sheet in this activity, it might dismiss.
+
+            // To be safe, AddEditCustomerSheet needs to callback with the ID.
+            // Previous impl of AddEditCustomerSheet just dismissed or used
+            // setFragmentResult.
+            // I'll stick to the previous pattern: sheet might just close.
+            // If we want auto-selection, we need the ID.
         });
 
         customerSpinner.setOnTouchListener((v, event) -> {

@@ -14,7 +14,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bsoft.inventorymanager.R;
 import com.bsoft.inventorymanager.activities.CustomerProfileActivity;
-import com.bsoft.inventorymanager.models.Customer;
+import com.bsoft.inventorymanager.model.Customer;
 import java.util.List;
 import java.util.Locale;
 
@@ -25,6 +25,7 @@ public class CustomerAdapter extends RecyclerView.Adapter<CustomerAdapter.Custom
 
     public interface OnCustomerActionListener {
         void onEdit(int position, Customer customer);
+
         void onDelete(int position, Customer customer);
     }
 
@@ -46,11 +47,13 @@ public class CustomerAdapter extends RecyclerView.Adapter<CustomerAdapter.Custom
         holder.textViewCustomerName.setText(customer.getName());
         holder.textViewCustomerAddress.setText(customer.getAddress());
         holder.textViewCustomerAge.setText(String.format(Locale.getDefault(), "Age: %d", customer.getAge()));
-        holder.textViewCustomerPhone.setText(String.format("Phone: %s", customer.getContactNumber() != null ? customer.getContactNumber() : "N/A"));
+        holder.textViewCustomerPhone.setText(
+                String.format("Phone: %s", customer.getContactNumber() != null ? customer.getContactNumber() : "N/A"));
 
         if (customer.getPhoto() != null && !customer.getPhoto().isEmpty()) {
             byte[] decodedString = Base64.decode(customer.getPhoto(), Base64.DEFAULT);
-            holder.imageViewCustomer.setImageBitmap(BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length));
+            holder.imageViewCustomer
+                    .setImageBitmap(BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length));
         } else {
             holder.imageViewCustomer.setImageResource(R.drawable.ic_customer);
         }

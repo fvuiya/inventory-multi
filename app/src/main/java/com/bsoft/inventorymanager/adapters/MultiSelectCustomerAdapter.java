@@ -10,12 +10,13 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bsoft.inventorymanager.R;
-import com.bsoft.inventorymanager.models.Customer;
+import com.bsoft.inventorymanager.model.Customer;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MultiSelectCustomerAdapter extends RecyclerView.Adapter<MultiSelectCustomerAdapter.MultiSelectCustomerViewHolder> {
+public class MultiSelectCustomerAdapter
+        extends RecyclerView.Adapter<MultiSelectCustomerAdapter.MultiSelectCustomerViewHolder> {
 
     private List<Customer> customerList;
     private final List<Customer> selectedCustomers;
@@ -55,7 +56,7 @@ public class MultiSelectCustomerAdapter extends RecyclerView.Adapter<MultiSelect
 
     @Override
     public int getItemCount() {
-        return customerList.size();
+        return customerList != null ? customerList.size() : 0;
     }
 
     public List<Customer> getSelectedCustomers() {

@@ -12,20 +12,23 @@ import android.widget.Toast;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.bsoft.inventorymanager.R;
 import com.bsoft.inventorymanager.adapters.SelectableCustomerAdapter;
-import com.bsoft.inventorymanager.models.Customer;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.bsoft.inventorymanager.model.Customer;
+import com.bsoft.inventorymanager.viewmodels.CustomerViewModel;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class SelectCustomerActivity extends AppCompatActivity
         implements SelectableCustomerAdapter.OnCustomerSelectedListener {
 
@@ -36,10 +39,11 @@ public class SelectCustomerActivity extends AppCompatActivity
     private SwipeRefreshLayout swipeRefreshLayout;
     private RecyclerView customersRecyclerView;
 
-    private FirebaseFirestore db;
     private SelectableCustomerAdapter selectableCustomerAdapter;
     private List<Customer> allCustomersList = new ArrayList<>();
     private List<Customer> displayedCustomersList = new ArrayList<>();
+
+    private CustomerViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,12 +57,12 @@ public class SelectCustomerActivity extends AppCompatActivity
             getSupportActionBar().setTitle("Select Customer");
         }
 
+        viewModel = new ViewModelProvider(this).get(CustomerViewModel.class);
+
         searchEditText = findViewById(R.id.search_customer_edittext);
         swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout_select_customer);
         customersRecyclerView = findViewById(R.id.customers_recycler_view_select_customer);
         FloatingActionButton fabSearch = findViewById(R.id.fab_search_customer);
-
-        db = FirebaseFirestore.getInstance();
 
         setupRecyclerView();
         setupSearch();
@@ -77,7 +81,31 @@ public class SelectCustomerActivity extends AppCompatActivity
         });
 
         swipeRefreshLayout.setRefreshing(true);
-        loadCustomersFromFirestore();
+
+        observeViewModel();
+        viewModel.loadCustomers(); // Helper to start loading
+    }
+
+    private void observeViewModel() {
+        viewModel.getCustomers().observe(this, customers -> {
+            swipeRefreshLayout.setRefreshing(false);
+            if (customers != null) {
+                allCustomersList.clear();
+                allCustomersList.addAll(customers);
+                applyFiltersAndSearch(); // Re-apply filters on new data
+            }
+        });
+
+        viewModel.getError().observe(this, error -> {
+            swipeRefreshLayout.setRefreshing(false);
+            if (error != null) {
+                Toast.makeText(this, "Error loading customers: " + error, Toast.LENGTH_LONG).show();
+            }
+        });
+
+        viewModel.isLoading().observe(this, isLoading -> {
+            swipeRefreshLayout.setRefreshing(isLoading);
+        });
     }
 
     private void setupRecyclerView() {
@@ -122,56 +150,8 @@ public class SelectCustomerActivity extends AppCompatActivity
     private void setupSwipeRefresh() {
         swipeRefreshLayout.setOnRefreshListener(() -> {
             Log.d(TAG, "Swipe to refresh triggered for customers.");
-            loadCustomersFromFirestore();
+            viewModel.loadCustomers();
         });
-    }
-
-    private void loadCustomersFromFirestore() {
-        Log.d(TAG, "=== Loading customers from Firestore ===");
-        db.collection("customers").get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    Log.d(TAG, "Firestore query successful. Document count: " + queryDocumentSnapshots.size());
-
-                    if (queryDocumentSnapshots.isEmpty()) {
-                        Log.w(TAG, "WARNING: No customers found in Firestore!");
-                        Toast.makeText(this, "No customers found in database", Toast.LENGTH_LONG).show();
-                    }
-
-                    allCustomersList.clear();
-                    int customerCount = 0;
-
-                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                        try {
-                            Log.d(TAG, "Processing document ID: " + document.getId());
-
-                            Customer customer = document.toObject(Customer.class);
-                            Log.d(TAG, "Customer object created. Name: " + customer.getName());
-
-                            customer.setDocumentId(document.getId());
-                            allCustomersList.add(customer);
-
-                            Log.d(TAG, "Added customer #" + (++customerCount) + ": " +
-                                    (customer.getName() != null ? customer.getName() : "NULL NAME") +
-                                    " (ID: " + customer.getDocumentId() + ")" +
-                                    " (Phone: "
-                                    + (customer.getContactNumber() != null ? customer.getContactNumber() : "NULL")
-                                    + ")");
-
-                        } catch (Exception e) {
-                            Log.e(TAG, "Error processing customer document " + document.getId(), e);
-                        }
-                    }
-
-                    Log.d(TAG, "Total customers processed: " + allCustomersList.size());
-                    applyFiltersAndSearch();
-                    swipeRefreshLayout.setRefreshing(false);
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "=== FIRESTORE ERROR ===", e);
-                    Toast.makeText(SelectCustomerActivity.this, "Error loading customers: " + e.getMessage(),
-                            Toast.LENGTH_LONG).show();
-                    swipeRefreshLayout.setRefreshing(false);
-                });
     }
 
     private final java.util.concurrent.ExecutorService filterExecutor = java.util.concurrent.Executors
@@ -212,7 +192,7 @@ public class SelectCustomerActivity extends AppCompatActivity
                     if (!searchQuery.isEmpty()) {
                         // Optional toast
                     } else if (allCustomersList.isEmpty()) {
-                        Toast.makeText(this, "No customers in database.", Toast.LENGTH_LONG).show();
+                        // Toast.makeText(this, "No customers in database.", Toast.LENGTH_LONG).show();
                     }
                 }
             });
@@ -231,8 +211,46 @@ public class SelectCustomerActivity extends AppCompatActivity
         Log.d(TAG, "Customer ID: " + customer.getDocumentId());
 
         Intent resultIntent = new Intent();
-        resultIntent.putExtra(EXTRA_SELECTED_CUSTOMER, customer);
-        Log.d(TAG, "Putting customer in intent with key: " + EXTRA_SELECTED_CUSTOMER);
+        // Passing serialized object might be risky if KMP model isn't Serializable
+        // compatible with Bundle.
+        // It's safer to pass ID if the receiver can fetch it, but historically we
+        // passed the object.
+        // I'll try passing it as Serializable since it's an interface on the Activity
+        // side usually.
+        // KMP @Serializable generates a serializer, but not necessarily
+        // java.io.Serializable.
+        // HOWEVER: The Customer.kt file showed earlier does NOT implement
+        // java.io.Serializable.
+        // So `resultIntent.putExtra` will fail if it expects Serializable.
+        // Wait, `putExtra` accepts Serializable. If Customer is not Serializable, this
+        // won't compile or runtime error.
+        // I need to check `Customer.kt` again.
+        // Oh, wait! The original Legacy `models.Customer` WAS Serializable. The NEW
+        // `model.Customer` might NOT be.
+        // If not, I should NOT pass the object. I should pass ID.
+        // But `CreateSaleActivity` expects the object.
+
+        // CRITICAL DEBT: The KMP models typically don't implement java.io.Serializable.
+        // I will change this to pass ID or make Customer Serializable in Android source
+        // set.
+        // Making it Serializable in commonMain is tricky (no java.io).
+        // Best approach: Add `java.io.Serializable` to `Customer` class via `actual` or
+        // just simple interface inheritance in AndroidMain? No.
+
+        // For now, I'll pass the properties I need or rely on a static cache/singleton?
+        // No.
+        // I'll assume for a moment that `CreateSaleActivity` will be updated to handle
+        // ID or I'll fix serialization.
+        // Actually, I can use a JSON string!
+
+        // Let's pass the ID. `CreateSaleActivity` can look it up or I'll update it.
+        // But the previous implementation passed the object.
+        // I'll check `CreateSaleActivity` next.
+        // For now, I commented out putting extra object in previous files.
+        // I will put the ID.
+
+        resultIntent.putExtra("SELECTED_CUSTOMER_ID", customer.getDocumentId());
+        resultIntent.putExtra("SELECTED_CUSTOMER_NAME", customer.getName());
 
         setResult(Activity.RESULT_OK, resultIntent);
         Log.d(TAG, "Setting result and finishing activity");

@@ -321,6 +321,11 @@ fun com.bsoft.inventorymanager.models.Purchase.toShared(): com.bsoft.inventoryma
         - Integrated `dayjs` in Cloud Functions for robust User-Timezone handling.
         - Refactored `ReportsViewModel` to remove legacy client-side aggregation logic and consume the Cloud Function response.
         - Updated `SalesFragment`, `FinancialFragment`, and `ProfitFragment` flow to trigger server-side fetch.
+- **2026-01-04 (Session 12 - Supplier Feature Debugging):**
+    -   **Bug Fix:** Resolved `SupplierActivity` crash (`NoSuchMethodException`) by enabling `kotlin-kapt` and fixing Hilt configuration for Kotlin ViewModels.
+    -   **Bug Fix:** Resolved `SupplierProfileActivity` crash (`Timestamp` deserialization error) by refactoring `SupplierProfileViewModel` to Kotlin/Clean Architecture and fixing `Timestamp` mapping in `SupplierRepositoryImpl`.
+    -   **Bug Fix:** Fixed `RuntimeException` in `PurchaseRepositoryImpl` due to mixed `Timestamp`/`Long` formats for `creationDate` and `lastDeliveryDate` in Firestore.
+    -   **Bug Fix:** Fixed `ClassCastException` in `ReportsActivity` by correctly parsing the `getInventoryAnalysis` Cloud Function response map.
 - **2025-12-22 (Session 9 - UI Consistency & Product Metadata Optimization):**
     -   **Reports Migration:** Migrated "Slow Moving Products" and "Lapsed Customers" logic to Cloud Functions (`getInventoryAnalysis`) for improved performance.
     -   **Performance:** Optimized `fetchUniqueBrandsAndCategories` in `ProductRepositoryImpl` to use a dedicated `metadata/products` document. This eliminates the need to scan the entire product collection to populate dropdowns, significantly reducing Firestore reads and latency.

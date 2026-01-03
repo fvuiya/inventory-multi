@@ -660,7 +660,9 @@ public class ReportsViewModel extends ViewModel {
         // Use fetchInventoryAnalysis helper (defined below)
         callInventoryAnalysisFunction(data)
                 .addOnSuccessListener(result -> {
-                    List<Product> products = mapToProducts((List<Map<String, Object>>) result.getData());
+                    Map<String, Object> resultMap = (Map<String, Object>) result.getData();
+                    List<Map<String, Object>> items = (List<Map<String, Object>>) resultMap.get("items");
+                    List<Product> products = mapToProducts(items);
                     if (products.isEmpty()) {
                         slowMovingProductsState.postValue(UiState.NO_DATA);
                     } else {
@@ -681,7 +683,9 @@ public class ReportsViewModel extends ViewModel {
 
         callInventoryAnalysisFunction(data)
                 .addOnSuccessListener(result -> {
-                    List<Customer> customers = mapToCustomers((List<Map<String, Object>>) result.getData());
+                    Map<String, Object> resultMap = (Map<String, Object>) result.getData();
+                    List<Map<String, Object>> items = (List<Map<String, Object>>) resultMap.get("items");
+                    List<Customer> customers = mapToCustomers(items);
                     if (customers.isEmpty()) {
                         lapsedCustomersState.postValue(UiState.NO_DATA);
                     } else {

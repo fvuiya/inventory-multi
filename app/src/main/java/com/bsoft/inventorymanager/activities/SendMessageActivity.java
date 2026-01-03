@@ -10,19 +10,22 @@ import android.widget.EditText;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bsoft.inventorymanager.R;
 import com.bsoft.inventorymanager.adapters.MultiSelectCustomerAdapter;
-import com.bsoft.inventorymanager.models.Customer;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.bsoft.inventorymanager.model.Customer;
+import com.bsoft.inventorymanager.viewmodels.CustomerViewModel;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class SendMessageActivity extends AppCompatActivity {
 
     private EditText editTextMinAge;
@@ -32,16 +35,19 @@ public class SendMessageActivity extends AppCompatActivity {
     private RecyclerView customersRecyclerView;
     private Button buttonSend;
 
-    private FirebaseFirestore db;
     private List<Customer> allCustomers;
     private List<Customer> filteredCustomers;
     private MultiSelectCustomerAdapter adapter;
     private String offerDescription;
 
+    private CustomerViewModel viewModel;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_send_message);
+
+        viewModel = new ViewModelProvider(this).get(CustomerViewModel.class);
 
         editTextMinAge = findViewById(R.id.editTextMinAge);
         editTextMaxAge = findViewById(R.id.editTextMaxAge);
@@ -50,7 +56,6 @@ public class SendMessageActivity extends AppCompatActivity {
         customersRecyclerView = findViewById(R.id.customersRecyclerView);
         buttonSend = findViewById(R.id.buttonSend);
 
-        db = FirebaseFirestore.getInstance();
         allCustomers = new ArrayList<>();
         filteredCustomers = new ArrayList<>();
         adapter = new MultiSelectCustomerAdapter(filteredCustomers);
@@ -60,25 +65,19 @@ public class SendMessageActivity extends AppCompatActivity {
 
         offerDescription = getIntent().getStringExtra("offer_description");
 
-        loadAllCustomers();
+        viewModel.getCustomers().observe(this, customers -> {
+            if (customers != null) {
+                allCustomers.clear();
+                allCustomers.addAll(customers);
+                filterCustomers(); // Update UI with initial data
+            }
+        });
+
+        viewModel.loadCustomers(); // Helper to start loading
 
         buttonFilter.setOnClickListener(v -> filterCustomers());
 
         buttonSend.setOnClickListener(v -> sendMessage());
-    }
-
-    private void loadAllCustomers() {
-        db.collection("customers").get().addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                allCustomers.clear();
-                for (QueryDocumentSnapshot document : task.getResult()) {
-                    Customer customer = document.toObject(Customer.class);
-                    customer.setDocumentId(document.getId());
-                    allCustomers.add(customer);
-                }
-                filterCustomers(); // Initially, show all customers
-            }
-        });
     }
 
     private void filterCustomers() {
@@ -103,7 +102,8 @@ public class SendMessageActivity extends AppCompatActivity {
         filteredCustomers.addAll(allCustomers.stream()
                 .filter(customer -> (finalMinAge == -1 || customer.getAge() >= finalMinAge))
                 .filter(customer -> (finalMaxAge == -1 || customer.getAge() <= finalMaxAge))
-                .filter(customer -> (address.isEmpty() || customer.getAddress().toLowerCase().contains(address.toLowerCase())))
+                .filter(customer -> (address.isEmpty() || (customer.getAddress() != null
+                        && customer.getAddress().toLowerCase().contains(address.toLowerCase()))))
                 .collect(Collectors.toList()));
 
         adapter.setCustomers(filteredCustomers);
