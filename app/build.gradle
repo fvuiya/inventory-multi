@@ -1,7 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlinAndroid)
-    id 'kotlin-kapt' // ADDED: Required for Kotlin Hilt processing
+    alias(libs.plugins.kotlinSerialization) // ADDED for Kotlin Serialization
+    id 'kotlin-kapt'
     id 'com.google.gms.google-services'
     alias(libs.plugins.hilt.android)
 }
@@ -71,4 +72,5 @@ dependencies {
     
     // Shared KMP module
     implementation project(':shared')
+    implementation libs.kotlinx.serialization.json // ADDED for serializing KMP objects
 }
