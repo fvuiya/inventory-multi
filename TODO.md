@@ -263,7 +263,7 @@ fun com.bsoft.inventorymanager.models.Purchase.toShared(): com.bsoft.inventoryma
 - [x] **Phase 1, Day 1-2:** Create bug tracking system (Section 6 finalized)
 - [x] **[OPTIMIZATION]** Refactor Reports to use denormalized data and Activity-scoped ViewModel.
 - [ ] Reference: Review the full project roadmap in EXECUTION_PLAN.md
-- [ ] Migrate reporting logic to server-side Cloud Functions.
+- [x] Migrate reporting logic to server-side Cloud Functions.
 - [x] **Notifications (Android):** Implement logic to retrieve and store FCM tokens for employees.
 - [x] **Notifications (Cloud Functions):** Set up a new Firebase Functions project.
 - [x] **Notifications (Cloud Functions):** Implement a function triggered by new sales to send notifications.
@@ -318,6 +318,7 @@ fun com.bsoft.inventorymanager.models.Purchase.toShared(): com.bsoft.inventoryma
         - Refactored `ReportsViewModel` to remove legacy client-side aggregation logic and consume the Cloud Function response.
         - Updated `SalesFragment`, `FinancialFragment`, and `ProfitFragment` flow to trigger server-side fetch.
 - **2025-12-22 (Session 9 - UI Consistency & Product Metadata Optimization):**
+    -   **Reports Migration:** Migrated "Slow Moving Products" and "Lapsed Customers" logic to Cloud Functions (`getInventoryAnalysis`) for improved performance.
     -   **Performance:** Optimized `fetchUniqueBrandsAndCategories` in `ProductRepositoryImpl` to use a dedicated `metadata/products` document. This eliminates the need to scan the entire product collection to populate dropdowns, significantly reducing Firestore reads and latency.
     -   **Refactor:** Refactored `SalesActivity` and `PurchaseActivity` to use `MainViewModel` and `SwipeRefreshLayout`. This removes direct Firestore listeners, ensures consistent pagination logic across the dashboard, and enables manual "pull-to-refresh" functionality.
     -   **Architecture:** Centralized Product operations into `ProductRepository` and exposed them via `MainViewModel`. `ProductActivity` now delegates all data operations to the ViewModel, removing direct Firestore dependencies for write operations.

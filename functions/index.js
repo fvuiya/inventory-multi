@@ -330,3 +330,100 @@ exports.getDashboardStats = functions.https.onCall(async (data, context) => {
         granularity: granularity
     };
 });
+
+/**
+ * Callable Function: Get Inventory Analysis
+ * specialized analysis for "Slow Moving Products" and "Lapsed Customers".
+ */
+exports.getInventoryAnalysis = functions.https.onCall(async (data, context) => {
+    const type = data.type; // "SLOW_MOVING" | "LAPSED_CUSTOMERS"
+    const db = admin.firestore();
+
+    if (type === "SLOW_MOVING") {
+        const startDate = data.startDate;
+        const endDate = data.endDate;
+        if (!startDate || !endDate) {
+            throw new functions.https.HttpsError("invalid-argument", "Missing date range.");
+        }
+
+        const startTs = admin.firestore.Timestamp.fromMillis(startDate);
+        const endTs = admin.firestore.Timestamp.fromMillis(endDate);
+
+        // 1. Get all sales in range to find sold product IDs
+        const salesSnap = await db.collection("sales")
+            .where("saleDate", ">=", startTs)
+            .where("saleDate", "<=", endTs)
+            .select("items") // Optimization: only fetch items
+            .get();
+
+        const soldProductIds = new Set();
+        salesSnap.forEach(doc => {
+            const sale = doc.data();
+            if (sale.items && Array.isArray(sale.items)) {
+                sale.items.forEach(item => {
+                    if (item.productId) soldProductIds.add(item.productId);
+                });
+            }
+        });
+
+        // 2. Get all products (Optimize: This could be heavy for large inventories. 
+        // For now, it matches client-side behavior but runs on server).
+        const productsSnap = await db.collection("products").get();
+
+        const slowMoving = [];
+        productsSnap.forEach(doc => {
+            if (!soldProductIds.has(doc.id)) {
+                const p = doc.data();
+                slowMoving.push({
+                    documentId: doc.id,
+                    name: p.name,
+                    quantity: p.quantity || 0,
+                    category: p.category || "",
+                    unit: p.unit || ""
+                });
+            }
+        });
+
+        return { items: slowMoving };
+
+    } else if (type === "LAPSED_CUSTOMERS") {
+        // Lapsed = No purchase in last 90 days
+        const ninetyDaysAgo = dayjs().subtract(90, 'day').toDate();
+        const cutoffTs = admin.firestore.Timestamp.fromDate(ninetyDaysAgo);
+
+        // 1. Get recent sales (last 90 days)
+        const recentSalesSnap = await db.collection("sales")
+            .where("saleDate", ">=", cutoffTs)
+            .select("customerId")
+            .get();
+
+        const activeCustomerIds = new Set();
+        recentSalesSnap.forEach(doc => {
+            const sale = doc.data();
+            if (sale.customerId) activeCustomerIds.add(sale.customerId);
+        });
+
+        // 2. Get all active customers
+        const customersSnap = await db.collection("customers")
+            .where("isActive", "==", true)
+            .get();
+
+        const lapsed = [];
+        customersSnap.forEach(doc => {
+            if (!activeCustomerIds.has(doc.id)) {
+                const c = doc.data();
+                lapsed.push({
+                    documentId: doc.id,
+                    name: c.name,
+                    contactNumber: c.contactNumber || "",
+                    lastPurchaseDate: c.lastPurchaseDate ? c.lastPurchaseDate.toMillis() : 0
+                });
+            }
+        });
+
+        return { items: lapsed };
+
+    } else {
+        throw new functions.https.HttpsError("invalid-argument", "Valid type required.");
+    }
+});

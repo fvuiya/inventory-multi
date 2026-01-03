@@ -3,6 +3,7 @@ package com.bsoft.inventorymanager.reports.viewmodels;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
+import android.util.Log;
 import com.bsoft.inventorymanager.models.Customer;
 import com.bsoft.inventorymanager.models.Product;
 import com.bsoft.inventorymanager.models.Purchase;
@@ -20,6 +21,8 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.functions.FirebaseFunctions;
+import com.google.firebase.functions.HttpsCallableResult;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -649,94 +652,95 @@ public class ReportsViewModel extends ViewModel {
 
     public void loadSlowMovingProducts(Date startDate, Date endDate) {
         slowMovingProductsState.postValue(UiState.LOADING);
-        Task<QuerySnapshot> salesTask = db.collection("sales")
-                .whereGreaterThanOrEqualTo("saleDate", new Timestamp(startDate))
-                .whereLessThanOrEqualTo("saleDate", new Timestamp(endDate)).get();
-        Task<QuerySnapshot> productsTask = db.collection("products").get();
+        Map<String, Object> data = new HashMap<>();
+        data.put("type", "SLOW_MOVING");
+        data.put("startDate", startDate.getTime());
+        data.put("endDate", endDate.getTime());
 
-        Tasks.whenAllSuccess(salesTask, productsTask).addOnSuccessListener(results -> {
-            QuerySnapshot salesSnapshot = (QuerySnapshot) results.get(0);
-            QuerySnapshot productsSnapshot = (QuerySnapshot) results.get(1);
-
-            Set<String> soldProductIds = new HashSet<>();
-            for (DocumentSnapshot doc : salesSnapshot.getDocuments()) {
-                Sale sale = doc.toObject(Sale.class);
-                if (sale != null && sale.getItems() != null) {
-                    for (SaleItem item : sale.getItems()) {
-                        soldProductIds.add(item.getProductId());
+        // Use fetchInventoryAnalysis helper (defined below)
+        callInventoryAnalysisFunction(data)
+                .addOnSuccessListener(result -> {
+                    List<Product> products = mapToProducts((List<Map<String, Object>>) result.getData());
+                    if (products.isEmpty()) {
+                        slowMovingProductsState.postValue(UiState.NO_DATA);
+                    } else {
+                        slowMovingProductsData.postValue(products);
+                        slowMovingProductsState.postValue(UiState.HAS_DATA);
                     }
-                }
-            }
-
-            List<Product> allProducts = new ArrayList<>();
-            for (DocumentSnapshot doc : productsSnapshot.getDocuments()) {
-                try {
-                    Product p = doc.toObject(Product.class);
-                    if (p != null) {
-                        p.setDocumentId(doc.getId());
-                        allProducts.add(p);
-                    }
-                } catch (Exception e) {
-                    /* Skip */}
-            }
-            List<Product> slowMovingProducts = allProducts.stream()
-                    .filter(p -> !soldProductIds.contains(p.getDocumentId()))
-                    .collect(Collectors.toList());
-
-            if (slowMovingProducts.isEmpty()) {
-                slowMovingProductsState.postValue(UiState.NO_DATA);
-            } else {
-                slowMovingProductsData.postValue(slowMovingProducts);
-                slowMovingProductsState.postValue(UiState.HAS_DATA);
-            }
-        }).addOnFailureListener(e -> slowMovingProductsState.postValue(UiState.NO_DATA));
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("ReportsViewModel", "Error loading slow moving products", e);
+                    slowMovingProductsState.postValue(UiState.NO_DATA);
+                });
     }
 
     public void loadLapsedCustomers() {
         lapsedCustomersState.postValue(UiState.LOADING);
+        Map<String, Object> data = new HashMap<>();
+        data.put("type", "LAPSED_CUSTOMERS");
 
-        Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.DAY_OF_YEAR, -90);
-        Date ninetyDaysAgo = cal.getTime();
+        callInventoryAnalysisFunction(data)
+                .addOnSuccessListener(result -> {
+                    List<Customer> customers = mapToCustomers((List<Map<String, Object>>) result.getData());
+                    if (customers.isEmpty()) {
+                        lapsedCustomersState.postValue(UiState.NO_DATA);
+                    } else {
+                        lapsedCustomersData.postValue(customers);
+                        lapsedCustomersState.postValue(UiState.HAS_DATA);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("ReportsViewModel", "Error loading lapsed customers", e);
+                    lapsedCustomersState.postValue(UiState.NO_DATA);
+                });
+    }
 
-        Task<QuerySnapshot> allCustomersTask = db.collection("customers").whereEqualTo("isActive", true).get();
-        Task<QuerySnapshot> recentSalesTask = db.collection("sales")
-                .whereGreaterThanOrEqualTo("saleDate", new Timestamp(ninetyDaysAgo)).get();
+    private Task<HttpsCallableResult> callInventoryAnalysisFunction(Map<String, Object> data) {
+        return functions.getHttpsCallable("getInventoryAnalysis").call(data);
+    }
 
-        Tasks.whenAllSuccess(allCustomersTask, recentSalesTask).addOnSuccessListener(results -> {
-            QuerySnapshot customersSnapshot = (QuerySnapshot) results.get(0);
-            QuerySnapshot salesSnapshot = (QuerySnapshot) results.get(1);
+    private List<Product> mapToProducts(List<Map<String, Object>> items) {
+        List<Product> products = new ArrayList<>();
+        if (items == null)
+            return products;
 
-            Set<String> recentCustomerIds = new HashSet<>();
-            for (DocumentSnapshot doc : salesSnapshot.getDocuments()) {
-                Sale sale = doc.toObject(Sale.class);
-                if (sale != null && sale.getCustomerId() != null) {
-                    recentCustomerIds.add(sale.getCustomerId());
+        for (Map<String, Object> item : items) {
+            Product p = new Product();
+            p.setDocumentId((String) item.get("documentId"));
+            p.setName((String) item.get("name"));
+            p.setCategory((String) item.get("category"));
+            p.setUnit((String) item.get("unit"));
+
+            Object qty = item.get("quantity");
+            if (qty instanceof Number) {
+                p.setQuantity(((Number) qty).intValue());
+            }
+            products.add(p);
+        }
+        return products;
+    }
+
+    private List<Customer> mapToCustomers(List<Map<String, Object>> items) {
+        List<Customer> customers = new ArrayList<>();
+        if (items == null)
+            return customers;
+
+        for (Map<String, Object> item : items) {
+            Customer c = new Customer();
+            c.setDocumentId((String) item.get("documentId"));
+            c.setName((String) item.get("name"));
+            c.setContactNumber((String) item.get("contactNumber"));
+
+            Object dateObj = item.get("lastPurchaseDate");
+            if (dateObj instanceof Number) {
+                long millis = ((Number) dateObj).longValue();
+                if (millis > 0) {
+                    c.setLastPurchaseDate(new Timestamp(new Date(millis)));
                 }
             }
-
-            List<Customer> allCustomers = new ArrayList<>();
-            for (DocumentSnapshot doc : customersSnapshot.getDocuments()) {
-                try {
-                    Customer c = doc.toObject(Customer.class);
-                    if (c != null) {
-                        c.setDocumentId(doc.getId());
-                        allCustomers.add(c);
-                    }
-                } catch (Exception e) {
-                    /* Skip */}
-            }
-            List<Customer> lapsedCustomers = allCustomers.stream()
-                    .filter(c -> !recentCustomerIds.contains(c.getDocumentId()))
-                    .collect(Collectors.toList());
-
-            if (lapsedCustomers.isEmpty()) {
-                lapsedCustomersState.postValue(UiState.NO_DATA);
-            } else {
-                lapsedCustomersData.postValue(lapsedCustomers);
-                lapsedCustomersState.postValue(UiState.HAS_DATA);
-            }
-        }).addOnFailureListener(e -> lapsedCustomersState.postValue(UiState.NO_DATA));
+            customers.add(c);
+        }
+        return customers;
     }
 
     public void loadCustomerAcquisitionOverTime(Date startDate, Date endDate) {
