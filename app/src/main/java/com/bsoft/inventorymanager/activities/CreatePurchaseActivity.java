@@ -25,7 +25,7 @@ import com.bsoft.inventorymanager.adapters.SelectedProductsAdapter;
 import com.bsoft.inventorymanager.models.PaymentDraft;
 import com.bsoft.inventorymanager.models.Product;
 import com.bsoft.inventorymanager.models.ProductSelection;
-import com.bsoft.inventorymanager.models.Supplier;
+import com.bsoft.inventorymanager.model.Supplier;
 import com.bsoft.inventorymanager.viewmodels.CreatePurchaseViewModel;
 import com.google.mlkit.vision.barcode.common.Barcode;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanner;
@@ -76,9 +76,10 @@ public class CreatePurchaseActivity extends BaseActivity
     private final ActivityResultLauncher<Intent> selectSupplierLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(), result -> {
                 if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
-                    Supplier supplier = (Supplier) result.getData()
-                            .getSerializableExtra(SelectSupplierActivity.EXTRA_SELECTED_SUPPLIER);
-                    if (supplier != null) {
+                    String json = result.getData().getStringExtra(SelectSupplierActivity.EXTRA_SELECTED_SUPPLIER);
+                    if (json != null) {
+                        Supplier supplier = com.bsoft.inventorymanager.utils.SupplierSerializationHelper
+                                .deserialize(json);
                         viewModel.setSelectedSupplier(supplier);
                     }
                 }

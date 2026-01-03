@@ -2,10 +2,8 @@ package com.bsoft.inventorymanager.utils
 
 import com.bsoft.inventorymanager.model.Purchase as SharedPurchase
 import com.bsoft.inventorymanager.model.PurchaseItem as SharedPurchaseItem
-import com.bsoft.inventorymanager.model.Supplier as SharedSupplier
 import com.bsoft.inventorymanager.models.Purchase as JavaPurchase
 import com.bsoft.inventorymanager.models.PurchaseItem as JavaPurchaseItem
-import com.bsoft.inventorymanager.models.Supplier as JavaSupplier
 
 /**
  * Mapper utilities to convert between Java models (in :app) and Kotlin shared models (in :shared).

@@ -8,7 +8,7 @@ import com.bsoft.inventorymanager.models.Product;
 import com.bsoft.inventorymanager.models.ProductSelection;
 import com.bsoft.inventorymanager.models.Purchase;
 import com.bsoft.inventorymanager.models.PurchaseItem;
-import com.bsoft.inventorymanager.models.Supplier;
+import com.bsoft.inventorymanager.model.Supplier;
 import com.bsoft.inventorymanager.repositories.PurchaseRepository;
 import com.bsoft.inventorymanager.utils.FinancialCalculator;
 import com.google.firebase.Timestamp;

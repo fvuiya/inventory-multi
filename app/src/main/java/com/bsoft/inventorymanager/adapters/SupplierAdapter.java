@@ -14,7 +14,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bsoft.inventorymanager.R;
 import com.bsoft.inventorymanager.activities.SupplierProfileActivity;
-import com.bsoft.inventorymanager.models.Supplier;
+import com.bsoft.inventorymanager.model.Supplier;
 import java.util.List;
 import java.util.Locale;
 
@@ -25,6 +25,7 @@ public class SupplierAdapter extends RecyclerView.Adapter<SupplierAdapter.Suppli
 
     public interface OnSupplierActionListener {
         void onEdit(int position, Supplier supplier);
+
         void onDelete(int position, Supplier supplier);
     }
 
@@ -46,11 +47,17 @@ public class SupplierAdapter extends RecyclerView.Adapter<SupplierAdapter.Suppli
         holder.textViewSupplierName.setText(supplier.getName());
         holder.textViewSupplierAddress.setText(supplier.getAddress());
         holder.textViewSupplierAge.setText(String.format(Locale.getDefault(), "Age: %d", supplier.getAge()));
-        holder.textViewSupplierPhone.setText(String.format("Phone: %s", supplier.getContactNumber() != null ? supplier.getContactNumber() : "N/A"));
+        holder.textViewSupplierPhone.setText(
+                String.format("Phone: %s", supplier.getContactNumber() != null ? supplier.getContactNumber() : "N/A"));
 
         if (supplier.getPhoto() != null && !supplier.getPhoto().isEmpty()) {
-            byte[] decodedString = Base64.decode(supplier.getPhoto(), Base64.DEFAULT);
-            holder.imageViewSupplier.setImageBitmap(BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length));
+            try {
+                byte[] decodedString = Base64.decode(supplier.getPhoto(), Base64.DEFAULT);
+                holder.imageViewSupplier
+                        .setImageBitmap(BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length));
+            } catch (Exception e) {
+                holder.imageViewSupplier.setImageResource(R.drawable.ic_customer);
+            }
         } else {
             holder.imageViewSupplier.setImageResource(R.drawable.ic_customer);
         }

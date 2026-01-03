@@ -1,5 +1,6 @@
 package com.bsoft.inventorymanager.models;
 
+import com.bsoft.inventorymanager.model.Person;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentId;
 import com.google.firebase.firestore.PropertyName;

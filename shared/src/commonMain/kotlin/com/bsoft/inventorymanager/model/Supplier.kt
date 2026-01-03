@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 
 @Serializable
-data class Supplier(
+data class Supplier @JvmOverloads constructor(
     override var documentId: String = "",
     override var name: String = "",
     override var contactNumber: String = "",

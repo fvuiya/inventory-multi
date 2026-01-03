@@ -295,6 +295,10 @@ fun com.bsoft.inventorymanager.models.Purchase.toShared(): com.bsoft.inventoryma
 ## 3. Changelog & Decisions
 > A log of completed tasks and key micro-decisions made during development. Gemini proposes entries here after completing a task.
 
+- **2026-01-04 (Session 12 - Supplier Feature Debugging):**
+    -   **Bug Fix:** Resolved `SupplierActivity` crash (`NoSuchMethodException`) by enabling `kotlin-kapt` and fixing Hilt configuration for Kotlin ViewModels.
+    -   **Bug Fix:** Resolved `SupplierProfileActivity` crash (`Timestamp` deserialization error) by refactoring `SupplierProfileViewModel` to Kotlin/Clean Architecture and fixing `Timestamp` mapping in `SupplierRepositoryImpl`.
+
 - **2025-01-01 (Session 11 - FCM Notifications):**
     -   **Feature:** Implemented end-to-end Notification System for new sales.
     -   **Android:** Added `fcmToken` to Employee model and implemented automatic token sync in `SplashActivity` and `LoginActivity`.

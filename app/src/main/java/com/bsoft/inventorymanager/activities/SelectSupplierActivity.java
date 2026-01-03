@@ -18,14 +18,13 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.bsoft.inventorymanager.R;
 import com.bsoft.inventorymanager.adapters.SelectableSupplierAdapter;
-import com.bsoft.inventorymanager.models.Supplier;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.bsoft.inventorymanager.model.Supplier;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+@dagger.hilt.android.AndroidEntryPoint
 public class SelectSupplierActivity extends AppCompatActivity
         implements SelectableSupplierAdapter.OnSupplierSelectedListener {
 
@@ -37,7 +36,7 @@ public class SelectSupplierActivity extends AppCompatActivity
     private RecyclerView suppliersRecyclerView;
     private FloatingActionButton filterFab;
 
-    private FirebaseFirestore db;
+    private com.bsoft.inventorymanager.viewmodels.SupplierViewModel viewModel;
     private SelectableSupplierAdapter selectableSupplierAdapter;
     private final List<Supplier> allSuppliersList = new ArrayList<>();
     private final List<Supplier> displayedSuppliersList = new ArrayList<>();
@@ -63,15 +62,56 @@ public class SelectSupplierActivity extends AppCompatActivity
         suppliersRecyclerView = findViewById(R.id.suppliers_recycler_view_select_supplier);
         filterFab = findViewById(R.id.fab_filter_supplier);
 
-        db = FirebaseFirestore.getInstance();
+        viewModel = new androidx.lifecycle.ViewModelProvider(this)
+                .get(com.bsoft.inventorymanager.viewmodels.SupplierViewModel.class);
 
         setupRecyclerView();
         setupSearch();
         setupFilterFab();
         setupSwipeRefresh();
 
-        swipeRefreshLayout.setRefreshing(true);
-        loadSuppliersFromFirestore();
+        observeViewModel();
+
+        loadSuppliers();
+    }
+
+    private void observeViewModel() {
+        viewModel.getSuppliers().observe(this, suppliers -> {
+            Log.d(TAG, "Suppliers loaded from ViewModel. Count: " + (suppliers != null ? suppliers.size() : "null"));
+            allSuppliersList.clear();
+            if (suppliers != null) {
+                allSuppliersList.addAll(suppliers);
+            }
+            applyFiltersAndSearch();
+            swipeRefreshLayout.setRefreshing(false);
+
+            if (allSuppliersList.isEmpty()) {
+                Toast.makeText(this, "No suppliers found in database", Toast.LENGTH_LONG).show();
+            }
+        });
+
+        viewModel.getError().observe(this, error -> {
+            if (error != null) {
+                Log.e(TAG, "Error loading suppliers: " + error);
+                Toast.makeText(SelectSupplierActivity.this, "Error loading suppliers: " + error, Toast.LENGTH_LONG)
+                        .show();
+                swipeRefreshLayout.setRefreshing(false);
+            }
+        });
+
+        viewModel.getLoading().observe(this, isLoading -> {
+            if (isLoading) {
+                if (!swipeRefreshLayout.isRefreshing()) {
+                    swipeRefreshLayout.setRefreshing(true);
+                }
+            } else {
+                swipeRefreshLayout.setRefreshing(false);
+            }
+        });
+    }
+
+    private void loadSuppliers() {
+        viewModel.loadSuppliers();
     }
 
     private void setupRecyclerView() {
@@ -149,56 +189,8 @@ public class SelectSupplierActivity extends AppCompatActivity
     private void setupSwipeRefresh() {
         swipeRefreshLayout.setOnRefreshListener(() -> {
             Log.d(TAG, "Swipe to refresh triggered for suppliers.");
-            loadSuppliersFromFirestore();
+            loadSuppliers();
         });
-    }
-
-    private void loadSuppliersFromFirestore() {
-        Log.d(TAG, "=== Loading suppliers from Firestore ===");
-        db.collection("suppliers").whereEqualTo("isActive", true).get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    Log.d(TAG, "Firestore query successful. Document count: " + queryDocumentSnapshots.size());
-
-                    if (queryDocumentSnapshots.isEmpty()) {
-                        Log.w(TAG, "WARNING: No active suppliers found in Firestore!");
-                        Toast.makeText(this, "No suppliers found in database", Toast.LENGTH_LONG).show();
-                    }
-
-                    allSuppliersList.clear();
-                    int supplierCount = 0;
-
-                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                        try {
-                            Log.d(TAG, "Processing document ID: " + document.getId());
-
-                            Supplier supplier = document.toObject(Supplier.class);
-                            Log.d(TAG, "Supplier object created. Name: " + supplier.getName());
-
-                            supplier.setDocumentId(document.getId());
-                            allSuppliersList.add(supplier);
-
-                            Log.d(TAG, "Added supplier #" + (++supplierCount) + ": " +
-                                    (supplier.getName() != null ? supplier.getName() : "NULL NAME") +
-                                    " (ID: " + supplier.getDocumentId() + ")" +
-                                    " (Phone: "
-                                    + (supplier.getContactNumber() != null ? supplier.getContactNumber() : "NULL")
-                                    + ")");
-
-                        } catch (Exception e) {
-                            Log.e(TAG, "Error processing supplier document " + document.getId(), e);
-                        }
-                    }
-
-                    Log.d(TAG, "Total suppliers processed: " + allSuppliersList.size());
-                    applyFiltersAndSearch();
-                    swipeRefreshLayout.setRefreshing(false);
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "=== FIRESTORE ERROR ===", e);
-                    Toast.makeText(SelectSupplierActivity.this, "Error loading suppliers: " + e.getMessage(),
-                            Toast.LENGTH_LONG).show();
-                    swipeRefreshLayout.setRefreshing(false);
-                });
     }
 
     private final java.util.concurrent.ExecutorService filterExecutor = java.util.concurrent.Executors
@@ -235,7 +227,7 @@ public class SelectSupplierActivity extends AppCompatActivity
                 boolean filterMatch = true;
                 if (currentFilters[0] && supplier.getRating() <= 0)
                     filterMatch = false;
-                if (currentFilters[1] && !supplier.isPreferredSupplier())
+                if (currentFilters[1] && !supplier.getPreferredSupplier())
                     filterMatch = false;
                 if (currentFilters[2] && !supplier.isActive())
                     filterMatch = false;
@@ -274,7 +266,8 @@ public class SelectSupplierActivity extends AppCompatActivity
         Log.d(TAG, "Supplier ID: " + supplier.getDocumentId());
 
         Intent resultIntent = new Intent();
-        resultIntent.putExtra(EXTRA_SELECTED_SUPPLIER, supplier);
+        String json = com.bsoft.inventorymanager.utils.SupplierSerializationHelper.serialize(supplier);
+        resultIntent.putExtra(EXTRA_SELECTED_SUPPLIER, json);
         Log.d(TAG, "Putting supplier in intent with key: " + EXTRA_SELECTED_SUPPLIER);
 
         setResult(Activity.RESULT_OK, resultIntent);

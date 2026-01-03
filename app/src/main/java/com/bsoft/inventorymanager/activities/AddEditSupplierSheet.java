@@ -4,16 +4,32 @@ import android.os.Bundle;
 import android.widget.Toast;
 
 import com.bsoft.inventorymanager.R;
-import com.bsoft.inventorymanager.models.Supplier;
+import com.bsoft.inventorymanager.model.Supplier;
 
 public class AddEditSupplierSheet extends BaseAddEditSheet<Supplier> {
 
     public static AddEditSupplierSheet newInstance(Supplier supplier) {
         AddEditSupplierSheet fragment = new AddEditSupplierSheet();
         Bundle args = new Bundle();
-        args.putSerializable("ARG_ITEM", supplier);
+        if (supplier != null) {
+            String json = com.bsoft.inventorymanager.utils.SupplierSerializationHelper.serialize(supplier);
+            args.putString("ARG_ITEM_JSON", json);
+        }
         fragment.setArguments(args);
         return fragment;
+    }
+
+    private com.bsoft.inventorymanager.viewmodels.SupplierViewModel viewModel;
+
+    @Override
+    public void onCreate(@androidx.annotation.Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getArguments() != null && getArguments().containsKey("ARG_ITEM_JSON")) {
+            String json = getArguments().getString("ARG_ITEM_JSON");
+            if (json != null) {
+                this.currentItem = com.bsoft.inventorymanager.utils.SupplierSerializationHelper.deserialize(json);
+            }
+        }
     }
 
     @Override
@@ -22,35 +38,40 @@ public class AddEditSupplierSheet extends BaseAddEditSheet<Supplier> {
     }
 
     @Override
+    public void onViewCreated(@androidx.annotation.NonNull android.view.View view,
+            @androidx.annotation.Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        viewModel = new androidx.lifecycle.ViewModelProvider(requireActivity())
+                .get(com.bsoft.inventorymanager.viewmodels.SupplierViewModel.class);
+
+        viewModel.getLastSavedSupplierId().observe(getViewLifecycleOwner(), id -> {
+            if (id != null) {
+                // Determine if this is the supplier we just saved.
+                // Since we reset value to null on save start, any non-null value here means
+                // success.
+                if (currentItem.getDocumentId().isEmpty()) {
+                    currentItem.setDocumentId(id);
+                }
+                Toast.makeText(getContext(), "Supplier saved successfully!", Toast.LENGTH_SHORT).show();
+                handleSuccess(currentItem);
+            }
+        });
+
+        viewModel.getError().observe(getViewLifecycleOwner(), error -> {
+            if (error != null) {
+                Toast.makeText(getContext(), "Error: " + error, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    @Override
     protected Supplier createNewItem() {
-        // Use parameterized constructor to initialize creationDate
-        return new Supplier("", "", 0, "");
+        return new Supplier();
     }
 
     @Override
     protected void onSave(Supplier supplier) {
-        if (supplier.getDocumentId() != null) {
-            db.collection("suppliers").document(supplier.getDocumentId()).set(supplier)
-                    .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(getContext(), "Supplier updated successfully!", Toast.LENGTH_SHORT).show();
-                        handleSuccess(supplier);
-                    })
-                    .addOnFailureListener(e -> {
-                        Toast.makeText(getContext(), "Error updating supplier: " + e.getMessage(), Toast.LENGTH_SHORT)
-                                .show();
-                    });
-        } else {
-            db.collection("suppliers").add(supplier)
-                    .addOnSuccessListener(documentReference -> {
-                        supplier.setDocumentId(documentReference.getId());
-                        Toast.makeText(getContext(), "Supplier added successfully!", Toast.LENGTH_SHORT).show();
-                        handleSuccess(supplier);
-                    })
-                    .addOnFailureListener(e -> {
-                        Toast.makeText(getContext(), "Error adding supplier: " + e.getMessage(), Toast.LENGTH_SHORT)
-                                .show();
-                    });
-        }
+        viewModel.saveSupplier(supplier);
     }
 
     private void handleSuccess(Supplier supplier) {

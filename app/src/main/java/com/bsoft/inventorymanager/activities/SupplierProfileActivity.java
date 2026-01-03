@@ -12,10 +12,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bsoft.inventorymanager.R;
 import com.bsoft.inventorymanager.adapters.ActivityEventAdapter;
-import com.bsoft.inventorymanager.models.Supplier;
+import com.bsoft.inventorymanager.model.Supplier;
 import com.bsoft.inventorymanager.viewmodels.ActivityFeedViewModel;
 import com.bsoft.inventorymanager.viewmodels.SupplierProfileViewModel;
 
+@dagger.hilt.android.AndroidEntryPoint
 public class SupplierProfileActivity extends AppCompatActivity {
 
     private SupplierProfileViewModel profileViewModel;

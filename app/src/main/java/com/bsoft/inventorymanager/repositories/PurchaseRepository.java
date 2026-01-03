@@ -3,7 +3,7 @@ package com.bsoft.inventorymanager.repositories;
 import com.bsoft.inventorymanager.models.Purchase;
 import com.bsoft.inventorymanager.models.PurchaseItem;
 import com.bsoft.inventorymanager.models.Product;
-import com.bsoft.inventorymanager.models.Supplier;
+import com.bsoft.inventorymanager.model.Supplier;
 import java.util.List;
 
 public interface PurchaseRepository {

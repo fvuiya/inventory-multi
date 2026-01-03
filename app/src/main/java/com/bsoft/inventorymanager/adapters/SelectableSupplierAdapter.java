@@ -10,7 +10,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bsoft.inventorymanager.R;
-import com.bsoft.inventorymanager.models.Supplier;
+import com.bsoft.inventorymanager.model.Supplier;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.CenterCrop;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
@@ -53,9 +53,12 @@ public class SelectableSupplierAdapter extends RecyclerView.Adapter<SelectableSu
         Supplier currentSupplier = suppliers.get(position);
 
         if (currentSupplier != null) {
-            holder.supplierNameTextView.setText(currentSupplier.getName() != null ? currentSupplier.getName() : "No Name");
-            holder.supplierPhoneTextView.setText(currentSupplier.getContactNumber() != null ? currentSupplier.getContactNumber() : "No Phone");
-            holder.supplierAddressTextView.setText(currentSupplier.getAddress() != null ? currentSupplier.getAddress() : "No Address");
+            holder.supplierNameTextView
+                    .setText(currentSupplier.getName() != null ? currentSupplier.getName() : "No Name");
+            holder.supplierPhoneTextView.setText(
+                    currentSupplier.getContactNumber() != null ? currentSupplier.getContactNumber() : "No Phone");
+            holder.supplierAddressTextView
+                    .setText(currentSupplier.getAddress() != null ? currentSupplier.getAddress() : "No Address");
 
             // Load supplier image if available
             if (currentSupplier.getPhoto() != null && !currentSupplier.getPhoto().isEmpty()) {

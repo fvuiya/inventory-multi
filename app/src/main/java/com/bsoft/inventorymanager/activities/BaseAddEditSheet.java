@@ -21,7 +21,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.bsoft.inventorymanager.R;
-import com.bsoft.inventorymanager.models.Person;
+import com.bsoft.inventorymanager.model.Person;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -29,7 +29,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
 
-public abstract class BaseAddEditSheet<T extends Person & Serializable> extends BottomSheetDialogFragment {
+public abstract class BaseAddEditSheet<T extends Person> extends BottomSheetDialogFragment {
 
     protected FirebaseFirestore db;
     protected T currentItem;
@@ -43,7 +43,9 @@ public abstract class BaseAddEditSheet<T extends Person & Serializable> extends 
     private ActivityResultLauncher<String> pickImageLauncher;
 
     protected abstract int getLayoutId();
+
     protected abstract void onSave(T item);
+
     protected abstract T createNewItem();
 
     @Override
@@ -58,7 +60,8 @@ public abstract class BaseAddEditSheet<T extends Person & Serializable> extends 
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         return inflater.inflate(getLayoutId(), container, false);
     }
 
@@ -88,7 +91,8 @@ public abstract class BaseAddEditSheet<T extends Person & Serializable> extends 
 
             if (currentItem.getPhoto() != null && !currentItem.getPhoto().isEmpty()) {
                 byte[] decodedString = Base64.decode(currentItem.getPhoto(), Base64.DEFAULT);
-                Bitmap decodedByte = android.graphics.BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                Bitmap decodedByte = android.graphics.BitmapFactory.decodeByteArray(decodedString, 0,
+                        decodedString.length);
                 itemImageView.setImageBitmap(decodedByte);
                 this.imageBase64 = currentItem.getPhoto();
             }
@@ -133,13 +137,14 @@ public abstract class BaseAddEditSheet<T extends Person & Serializable> extends 
     }
 
     private void initializeLaunchers() {
-        requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
-            if (isGranted) {
-                launchCamera();
-            } else {
-                Toast.makeText(getContext(), "Camera permission is required.", Toast.LENGTH_SHORT).show();
-            }
-        });
+        requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(),
+                isGranted -> {
+                    if (isGranted) {
+                        launchCamera();
+                    } else {
+                        Toast.makeText(getContext(), "Camera permission is required.", Toast.LENGTH_SHORT).show();
+                    }
+                });
 
         takePictureLauncher = registerForActivityResult(new ActivityResultContracts.TakePicture(), result -> {
             if (result && imageUri != null) {
