@@ -53,9 +53,26 @@ public class AppModule {
         return impl;
     }
 
+    // [KMP MIGRATION] Shared ProductRepository
     @Provides
     @Singleton
-    public com.bsoft.inventorymanager.repositories.ProductRepository provideProductRepository(
+    public com.bsoft.inventorymanager.repository.ProductRepository provideSharedProductRepository(
+            com.bsoft.inventorymanager.repository.ProductRepositoryImpl impl) {
+        return impl;
+    }
+
+    @Provides
+    @Singleton
+    public com.bsoft.inventorymanager.repository.ProductRepositoryImpl provideSharedProductRepositoryImpl(
+            FirebaseFirestore db) {
+        return new com.bsoft.inventorymanager.repository.ProductRepositoryImpl(db);
+    }
+
+    // [LEGACY] Kept for backward compatibility with SelectProductViewModel - TODO:
+    // Migrate
+    @Provides
+    @Singleton
+    public com.bsoft.inventorymanager.repositories.ProductRepository provideLegacyProductRepository(
             com.bsoft.inventorymanager.repositories.ProductRepositoryImpl impl) {
         return impl;
     }

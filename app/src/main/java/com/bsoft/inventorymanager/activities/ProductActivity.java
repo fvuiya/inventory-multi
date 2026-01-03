@@ -34,7 +34,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bsoft.inventorymanager.R;
 import com.bsoft.inventorymanager.adapters.ProductAdapter;
 import com.bsoft.inventorymanager.models.ApiProduct;
-import com.bsoft.inventorymanager.models.Product;
+// [KMP MIGRATION] Use shared Product model
+import com.bsoft.inventorymanager.model.Product;
 import com.bsoft.inventorymanager.models.ProductResponse;
 import com.bsoft.inventorymanager.network.ProductApiService;
 import com.bsoft.inventorymanager.network.RetrofitClient;
@@ -248,7 +249,7 @@ public class ProductActivity extends AppCompatActivity {
 
     private void loadBrandsAndCategories() {
         mainViewModel.fetchUniqueBrandsAndCategories(
-                new com.bsoft.inventorymanager.repositories.ProductRepository.UniqueFieldsCallback() {
+                new com.bsoft.inventorymanager.viewmodels.MainViewModel.UniqueFieldsCallback() {
                     @Override
                     public void onSuccess(List<String> brands, List<String> categories) {
                         brandList.clear();
@@ -819,16 +820,28 @@ public class ProductActivity extends AppCompatActivity {
     private void proceedToSave(String name, String imageIdentifier, String brand, String category, String productCode,
             int stocks, String unit, double costPrice, double purchasePrice, double mrp,
             double wholesalePrice, double dealerPrice) {
-        Product productToSave = new Product(name, imageIdentifier, brand, category, productCode, stocks, unit,
-                costPrice, purchasePrice, mrp, wholesalePrice, dealerPrice);
-
+        // [KMP MIGRATION] Create Product using data class default constructor and
+        // setters
+        Product productToSave = new Product();
         productToSave.setDocumentId(productCode); // Barcode is the document ID
+        productToSave.setName(name);
+        productToSave.setImageUrl(imageIdentifier);
+        productToSave.setBrand(brand);
+        productToSave.setCategory(category);
+        productToSave.setProductCode(productCode);
+        productToSave.setQuantity(stocks);
+        productToSave.setUnit(unit);
+        productToSave.setCostPrice(costPrice);
+        productToSave.setPurchasePrice(purchasePrice);
+        productToSave.setMrp(mrp);
+        productToSave.setWholesalePrice(wholesalePrice);
+        productToSave.setDealerPrice(dealerPrice);
 
         if (loadingDialog != null && !loadingDialog.isShowing())
             loadingDialog.show();
 
         mainViewModel.saveProduct(productToSave,
-                new com.bsoft.inventorymanager.repositories.ProductRepository.ProductCallback() {
+                new com.bsoft.inventorymanager.viewmodels.MainViewModel.ProductCallback() {
                     @Override
                     public void onSuccess() {
                         if (loadingDialog != null && loadingDialog.isShowing())
@@ -905,7 +918,7 @@ public class ProductActivity extends AppCompatActivity {
             loadingDialog.show();
 
         mainViewModel.deleteProduct(product,
-                new com.bsoft.inventorymanager.repositories.ProductRepository.ProductCallback() {
+                new com.bsoft.inventorymanager.viewmodels.MainViewModel.ProductCallback() {
                     @Override
                     public void onSuccess() {
                         if (loadingDialog != null && loadingDialog.isShowing())

@@ -2,7 +2,6 @@ package com.bsoft.inventorymanager.repositories;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import com.bsoft.inventorymanager.models.Product;
 import com.bsoft.inventorymanager.models.Purchase;
 import com.bsoft.inventorymanager.models.Sale;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -15,11 +14,15 @@ import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+/**
+ * MainRepository handles Sales and Purchases pagination.
+ * Products are now managed by the shared ProductRepository (KMP).
+ */
 @Singleton
 public class MainRepository {
     private final FirebaseFirestore db;
 
-    private final MutableLiveData<List<Product>> products = new MutableLiveData<>(new ArrayList<>());
+    // [KMP MIGRATION] Products removed - now handled by shared ProductRepository
     private final MutableLiveData<List<Sale>> sales = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<List<Purchase>> purchases = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
@@ -27,10 +30,6 @@ public class MainRepository {
     @Inject
     public MainRepository(FirebaseFirestore db) {
         this.db = db;
-    }
-
-    public LiveData<List<Product>> getProducts() {
-        return products;
     }
 
     public LiveData<List<Sale>> getSales() {
@@ -46,9 +45,6 @@ public class MainRepository {
     }
 
     // Pagination State
-    private DocumentSnapshot lastVisibleProduct;
-    private boolean isLastPageProducts = false;
-
     private DocumentSnapshot lastVisibleSale;
     private boolean isLastPageSales = false;
 
@@ -56,48 +52,11 @@ public class MainRepository {
     private boolean isLastPagePurchases = false;
 
     // Internal loading states to allow concurrent fetching
-    private boolean loadingProducts = false;
     private boolean loadingSales = false;
     private boolean loadingPurchases = false;
 
     private void updateGlobalLoadingState() {
-        isLoading.postValue(loadingProducts || loadingSales || loadingPurchases);
-    }
-
-    public void loadNextPageProducts() {
-        if (loadingProducts || isLastPageProducts)
-            return;
-
-        loadingProducts = true;
-        updateGlobalLoadingState();
-
-        PaginationHelper.fetchPaginatedData("products", lastVisibleProduct, 20, "name",
-                com.google.firebase.firestore.Query.Direction.ASCENDING, new PaginationHelper.PaginationCallback() {
-                    @Override
-                    public void onSuccess(List<DocumentSnapshot> documents, boolean hasMore) {
-                        if (!documents.isEmpty()) {
-                            lastVisibleProduct = documents.get(documents.size() - 1);
-                            List<Product> newItems = new ArrayList<>();
-                            for (DocumentSnapshot doc : documents) {
-                                Product item = doc.toObject(Product.class);
-                                if (item != null) {
-                                    item.setDocumentId(doc.getId());
-                                    newItems.add(item);
-                                }
-                            }
-                            appendToList(products, newItems);
-                        }
-                        isLastPageProducts = !hasMore;
-                        loadingProducts = false;
-                        updateGlobalLoadingState();
-                    }
-
-                    @Override
-                    public void onError(Exception e) {
-                        loadingProducts = false;
-                        updateGlobalLoadingState();
-                    }
-                });
+        isLoading.postValue(loadingSales || loadingPurchases);
     }
 
     public void loadNextPageSales() {
@@ -172,25 +131,27 @@ public class MainRepository {
                 });
     }
 
+    /**
+     * Preloads Sales and Purchases data.
+     * Products are loaded by MainViewModel via shared ProductRepository.
+     */
     public void preloadMainData() {
-        if (products.getValue() != null && !products.getValue().isEmpty())
-            return;
-
-        resetPagination();
-        loadNextPageProducts();
-        loadNextPageSales();
-        loadNextPagePurchases();
+        // Only preload Sales and Purchases
+        // Products are loaded by MainViewModel.loadNextPageProducts()
+        if (sales.getValue() == null || sales.getValue().isEmpty()) {
+            loadNextPageSales();
+        }
+        if (purchases.getValue() == null || purchases.getValue().isEmpty()) {
+            loadNextPagePurchases();
+        }
     }
 
     public void resetPagination() {
         // Clear Lists
-        products.setValue(new ArrayList<>());
         sales.setValue(new ArrayList<>());
         purchases.setValue(new ArrayList<>());
 
         // Reset state
-        lastVisibleProduct = null;
-        isLastPageProducts = false;
         lastVisibleSale = null;
         isLastPageSales = false;
         lastVisiblePurchase = null;

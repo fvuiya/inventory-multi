@@ -8,7 +8,7 @@ import android.util.Base64;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton; // Changed from ImageView
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -17,7 +17,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bsoft.inventorymanager.R;
 import com.bsoft.inventorymanager.activities.ProductProfileActivity;
-import com.bsoft.inventorymanager.models.Product;
+// [KMP MIGRATION] Use shared Product model
+import com.bsoft.inventorymanager.model.Product;
 import com.bumptech.glide.Glide;
 
 import java.util.List;
@@ -30,6 +31,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
 
     public interface OnProductActionListener {
         void onEdit(int position, Product product);
+
         void onDelete(int position, Product product);
     }
 
@@ -50,15 +52,24 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Product product = productList.get(position);
 
-        holder.productNameTextView.setText(product.getName() != null && !product.getName().isEmpty() ? product.getName() : "N/A");
+        // KMP Model Accessors (Java-friendly)
+        holder.productNameTextView
+                .setText(product.getName() != null && !product.getName().isEmpty() ? product.getName() : "N/A");
         holder.availableCountTextView.setText(String.format(Locale.getDefault(), "Stocks: %d", product.getQuantity()));
 
         // New fields
-        holder.textViewProductCode.setText(product.getProductCode() != null && !product.getProductCode().isEmpty() ? "Code: " + product.getProductCode() : "Code: N/A");
-        holder.textViewProductBrand.setText(product.getBrand() != null && !product.getBrand().isEmpty() ? "Brand: " + product.getBrand() : "Brand: N/A");
-        holder.textViewProductCategory.setText(product.getCategory() != null && !product.getCategory().isEmpty() ? "Category: " + product.getCategory() : "Category: N/A");
+        holder.textViewProductCode.setText(product.getProductCode() != null && !product.getProductCode().isEmpty()
+                ? "Code: " + product.getProductCode()
+                : "Code: N/A");
+        holder.textViewProductBrand
+                .setText(product.getBrand() != null && !product.getBrand().isEmpty() ? "Brand: " + product.getBrand()
+                        : "Brand: N/A");
+        holder.textViewProductCategory.setText(
+                product.getCategory() != null && !product.getCategory().isEmpty() ? "Category: " + product.getCategory()
+                        : "Category: N/A");
         holder.textViewProductMrp.setText(String.format(Locale.getDefault(), "MRP: %.2f", product.getMrp()));
-        holder.textViewProductCostPrice.setText(String.format(Locale.getDefault(), "Cost: %.2f", product.getPurchasePrice())); // Changed to getPurchasePrice
+        holder.textViewProductCostPrice
+                .setText(String.format(Locale.getDefault(), "Cost: %.2f", product.getPurchasePrice()));
 
         String imageUrl = product.getImageUrl();
         if (imageUrl != null && !imageUrl.isEmpty()) {
@@ -118,8 +129,9 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView productNameTextView, availableCountTextView;
-        TextView textViewProductCode, textViewProductBrand, textViewProductCategory, textViewProductMrp, textViewProductCostPrice; // New TextViews
-        ImageButton editProductImageView, deleteProductImageView; // Changed from ImageView
+        TextView textViewProductCode, textViewProductBrand, textViewProductCategory, textViewProductMrp,
+                textViewProductCostPrice;
+        ImageButton editProductImageView, deleteProductImageView;
         ImageView ivProductImageItem;
 
         public ViewHolder(@NonNull View itemView) {

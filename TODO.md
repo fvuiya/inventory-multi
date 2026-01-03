@@ -326,6 +326,16 @@ fun com.bsoft.inventorymanager.models.Purchase.toShared(): com.bsoft.inventoryma
     -   **Bug Fix:** Resolved `SupplierProfileActivity` crash (`Timestamp` deserialization error) by refactoring `SupplierProfileViewModel` to Kotlin/Clean Architecture and fixing `Timestamp` mapping in `SupplierRepositoryImpl`.
     -   **Bug Fix:** Fixed `RuntimeException` in `PurchaseRepositoryImpl` due to mixed `Timestamp`/`Long` formats for `creationDate` and `lastDeliveryDate` in Firestore.
     -   **Bug Fix:** Fixed `ClassCastException` in `ReportsActivity` by correctly parsing the `getInventoryAnalysis` Cloud Function response map.
+    -   **KMP Migration:** Fully migrated **Customer Feature** to use Kotlin Multiplatform shared models and repositories.
+        -   Converted `AddEditCustomerSheet` to Kotlin (`.kt`) to support safe `kotlinx-serialization` of KMP models.
+        -   Refactored `CustomerActivity`, `SelectCustomerActivity`, `CustomerProfileActivity` and their ViewModels to use `CustomerRepository`.
+        -   Updated `CustomerAdapter` to use shared `Customer` model.
+    -   **KMP Migration:** Migrated **Product Feature** to use Kotlin Multiplatform shared models and repositories.
+        -   Converted `MainViewModel` from Java to Kotlin.
+        -   Updated `MainViewModel` to use shared `ProductRepository` for product list loading and CRUD operations.
+        -   Removed product loading from `MainRepository` (now Sales/Purchases only).
+        -   Updated `ProductAdapter` and `ProductActivity` to use shared `Product` model.
+        -   Added Hilt bindings for shared `ProductRepository` and `ProductRepositoryImpl`.
 - **2025-12-22 (Session 9 - UI Consistency & Product Metadata Optimization):**
     -   **Reports Migration:** Migrated "Slow Moving Products" and "Lapsed Customers" logic to Cloud Functions (`getInventoryAnalysis`) for improved performance.
     -   **Performance:** Optimized `fetchUniqueBrandsAndCategories` in `ProductRepositoryImpl` to use a dedicated `metadata/products` document. This eliminates the need to scan the entire product collection to populate dropdowns, significantly reducing Firestore reads and latency.
