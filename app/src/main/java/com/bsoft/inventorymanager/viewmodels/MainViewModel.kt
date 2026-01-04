@@ -16,6 +16,7 @@ import com.bsoft.inventorymanager.repository.ProductRepository
 import com.bsoft.inventorymanager.repository.ProductPage
 import com.bsoft.inventorymanager.repository.BrandsAndCategories
 import com.bsoft.inventorymanager.utils.ModelMappers.toShared
+import com.bsoft.inventorymanager.utils.ModelMappers
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -41,8 +42,10 @@ class MainViewModel @Inject constructor(
         legacySales.map { it.toShared() }
     }
 
-    // --- Purchases (Legacy) ---
-    fun getPurchases(): LiveData<List<Purchase>> = mainRepository.purchases
+    // --- Purchases (Migrated to KMP Shared via mapping) ---
+    val purchases: LiveData<List<com.bsoft.inventorymanager.model.Purchase>> = mainRepository.purchases.map { legacyPurchases ->
+        legacyPurchases.map { with(ModelMappers) { it.toShared() } }
+    }
 
     // --- Expenses (Legacy) ---
     fun getExpenses(): LiveData<List<Expense>> = expenseRepository.expenses

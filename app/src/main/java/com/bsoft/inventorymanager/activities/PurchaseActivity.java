@@ -15,7 +15,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bsoft.inventorymanager.R;
 import com.bsoft.inventorymanager.adapters.PurchaseAdapter;
-import com.bsoft.inventorymanager.models.Purchase;
+// [KMP MIGRATION] Use shared Purchase model
+import com.bsoft.inventorymanager.model.Purchase;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;

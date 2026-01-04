@@ -5,18 +5,18 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bsoft.inventorymanager.R;
-import com.bsoft.inventorymanager.models.Purchase;
-import com.google.firebase.Timestamp;
+// [KMP MIGRATION] Use shared Purchase model
+import com.bsoft.inventorymanager.model.Purchase;
 
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -59,9 +59,11 @@ public class PurchaseAdapter extends RecyclerView.Adapter<PurchaseAdapter.Purcha
         holder.textViewPurchaseSupplierName.setText(purchase.getSupplierName());
         holder.textViewPurchaseSupplierAddress.setText(purchase.getSupplierContactNumber());
 
-        if (purchase.getPurchaseDate() != null && purchase.getPurchaseDate() instanceof Timestamp) {
+        // [KMP MIGRATION] purchaseDate is now Long (millis), not Timestamp
+        long purchaseDateMillis = purchase.getPurchaseDate();
+        if (purchaseDateMillis > 0) {
             SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yy HH:mm", Locale.getDefault());
-            holder.textViewPurchaseDateTime.setText(sdf.format(purchase.getPurchaseDate().toDate()));
+            holder.textViewPurchaseDateTime.setText(sdf.format(new Date(purchaseDateMillis)));
         } else {
             holder.textViewPurchaseDateTime.setText("N/A");
         }
@@ -74,8 +76,6 @@ public class PurchaseAdapter extends RecyclerView.Adapter<PurchaseAdapter.Purcha
         holder.textViewPurchaseAmountPaid
                 .setText(String.format("Paid: %s", bdtFormat.format(purchase.getAmountPaid())));
         holder.textViewPurchaseAmountDue.setText(String.format("Due: %s", bdtFormat.format(purchase.getAmountDue())));
-
-        // Icon removed from layout
 
         holder.itemView.setOnClickListener(v -> {
             if (itemClickListener != null) {
