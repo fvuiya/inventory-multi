@@ -16,7 +16,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bsoft.inventorymanager.R;
 import com.bsoft.inventorymanager.adapters.SalesAdapter;
-import com.bsoft.inventorymanager.models.Sale;
+// [KMP MIGRATION] Use shared Sale model
+import com.bsoft.inventorymanager.model.Sale;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;

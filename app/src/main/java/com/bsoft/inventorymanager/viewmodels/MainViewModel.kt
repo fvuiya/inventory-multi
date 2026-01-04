@@ -3,17 +3,19 @@ package com.bsoft.inventorymanager.viewmodels
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
-// [KMP MIGRATION] Use shared Product model
+// [KMP MIGRATION] Use shared models
 import com.bsoft.inventorymanager.model.Product
+import com.bsoft.inventorymanager.model.Sale
 import com.bsoft.inventorymanager.models.Expense
 import com.bsoft.inventorymanager.models.Purchase
-import com.bsoft.inventorymanager.models.Sale
 import com.bsoft.inventorymanager.repositories.MainRepository
 // [KMP MIGRATION] Use shared ProductRepository
 import com.bsoft.inventorymanager.repository.ProductRepository
 import com.bsoft.inventorymanager.repository.ProductPage
 import com.bsoft.inventorymanager.repository.BrandsAndCategories
+import com.bsoft.inventorymanager.utils.ModelMappers.toShared
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -34,8 +36,10 @@ class MainViewModel @Inject constructor(
     private var isLastPageProducts = false
     private var loadingProducts = false
 
-    // --- Sales (Legacy) ---
-    fun getSales(): LiveData<List<Sale>> = mainRepository.sales
+    // --- Sales (Migrated to KMP Shared via mapping) ---
+    val sales: LiveData<List<Sale>> = mainRepository.sales.map { legacySales ->
+        legacySales.map { it.toShared() }
+    }
 
     // --- Purchases (Legacy) ---
     fun getPurchases(): LiveData<List<Purchase>> = mainRepository.purchases

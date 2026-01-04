@@ -336,6 +336,12 @@ fun com.bsoft.inventorymanager.models.Purchase.toShared(): com.bsoft.inventoryma
         -   Removed product loading from `MainRepository` (now Sales/Purchases only).
         -   Updated `ProductAdapter` and `ProductActivity` to use shared `Product` model.
         -   Added Hilt bindings for shared `ProductRepository` and `ProductRepositoryImpl`.
+    -   **KMP Migration:** Migrated **Sales Feature** (list view) to use Kotlin Multiplatform shared models.
+        -   Updated `SalesAdapter` to use shared `Sale` model (saleDate as Long, totalAmount directly).
+        -   Added Sale/SaleItem mappers to `ModelMappers.kt` for bidirectional conversion.
+        -   Updated `MainViewModel` to expose shared `Sale` list via LiveData mapping.
+        -   Updated `SalesActivity` to use shared `Sale` model.
+        -   Note: `CreateSaleViewModel` remains on legacy models (deferred, low priority - works correctly).
 - **2025-12-22 (Session 9 - UI Consistency & Product Metadata Optimization):**
     -   **Reports Migration:** Migrated "Slow Moving Products" and "Lapsed Customers" logic to Cloud Functions (`getInventoryAnalysis`) for improved performance.
     -   **Performance:** Optimized `fetchUniqueBrandsAndCategories` in `ProductRepositoryImpl` to use a dedicated `metadata/products` document. This eliminates the need to scan the entire product collection to populate dropdowns, significantly reducing Firestore reads and latency.
